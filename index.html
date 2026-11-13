@@ -1,0 +1,742 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Onze lijstjes</title>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#1689e0">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+/* Layout: lijstenkolom links, open lijst rechts; op telefoon één kolom tegelijk. */
+:root{
+  --bg:#f2f6fc; --surface:#ffffff; --ink:#1c2b3d; --muted:#66788d; --line:#dfe7f1;
+  --accent:#1689e0; --accent-ink:#ffffff; --accent-soft:#e1f1fd; --ok:#2bb673;
+  --late:#e2474c; --late-soft:#fde7e7; --soon:#b56a00; --soon-soft:#fff0d2;
+  --display:"Nunito",system-ui,sans-serif;
+  --body:"Nunito",system-ui,-apple-system,"Segoe UI",sans-serif;
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#0f1722; --surface:#182331; --ink:#e8eef6; --muted:#93a4b8; --line:#283646;
+    --accent:#4fb0f5; --accent-ink:#06213a; --accent-soft:#17344d; --ok:#44cf8c;
+    --late:#ff8a8d; --late-soft:#45202a; --soon:#f0c05a; --soon-soft:#3b3014;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0f1722; --surface:#182331; --ink:#e8eef6; --muted:#93a4b8; --line:#283646;
+    --accent:#4fb0f5; --accent-ink:#06213a; --accent-soft:#17344d; --ok:#44cf8c;
+    --late:#ff8a8d; --late-soft:#45202a; --soon:#f0c05a; --soon-soft:#3b3014;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 16px/1.4 var(--body);-webkit-text-size-adjust:100%}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer;background:none;border:0;padding:0}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:6px}
+[hidden]{display:none!important}
+
+.app{display:grid;grid-template-columns:300px minmax(0,1fr);height:100%;max-width:1080px;margin:0 auto}
+aside{display:flex;flex-direction:column;gap:14px;padding:18px 16px;overflow-y:auto;border-right:1px solid var(--line)}
+main{display:flex;flex-direction:column;min-width:0;overflow-y:auto;padding:18px 20px 80px}
+.brand{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.brand h1{font:800 26px/1.1 var(--display);margin:0;letter-spacing:-.01em}
+.me{display:flex;align-items:center;gap:6px;padding:6px 10px;border:1px solid var(--line);border-radius:999px;background:var(--surface);font-size:14px;font-weight:500}
+.me.ask{border-color:var(--accent);color:var(--accent)}
+.dot{width:20px;height:20px;border-radius:50%;display:inline-grid;place-items:center;font-size:11px;font-weight:600;color:#fff;flex:none}
+
+.lists{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.lists button{width:100%;display:flex;align-items:center;gap:12px;padding:9px 12px 9px 9px;border-radius:16px;text-align:left;min-height:56px;background:var(--surface);border:1px solid var(--line);box-shadow:0 1px 2px rgba(20,40,70,.05)}
+.lists button:hover{border-color:var(--accent)}
+.lists button[aria-current="true"]{background:var(--accent-soft);border-color:var(--accent)}
+.badge{width:38px;height:38px;border-radius:12px;display:grid;place-items:center;color:#fff;flex:none}
+.lists .nm{flex:1;min-width:0;font-weight:700;overflow-wrap:anywhere}
+.count{font-variant-numeric:tabular-nums;font-size:13px;font-weight:700;color:var(--accent);background:var(--accent-soft);min-width:26px;padding:3px 8px;border-radius:999px;text-align:center}
+.count:empty{display:none}
+.count.late{color:#fff;background:var(--late)}
+.sep{height:0;margin:2px 0}
+.ghost{display:flex;align-items:center;justify-content:center;gap:6px;padding:10px 12px;border:1px dashed var(--line);border-radius:10px;color:var(--muted);font-weight:500;min-height:44px}
+.ghost:hover{color:var(--ink);border-color:var(--muted)}
+
+.head{display:flex;align-items:center;gap:8px;margin-bottom:12px}
+.head h2{flex:1;min-width:0;font:800 24px/1.15 var(--display);margin:0;text-wrap:balance;overflow-wrap:anywhere}
+.back{display:none;align-items:center;gap:2px;padding:8px 10px 8px 4px;color:var(--accent);font-weight:600;min-height:44px}
+.icon-btn{width:44px;height:44px;border-radius:10px;display:grid;place-items:center;color:var(--muted)}
+.icon-btn:hover{background:var(--surface);color:var(--ink)}
+
+.add{position:sticky;top:-18px;z-index:2;background:var(--bg);padding:6px 0 10px;margin-top:-6px}
+.add form{display:flex;gap:8px}
+.add input{flex:1;min-width:0;padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:var(--surface);font-size:16px}
+.add input:focus{outline:2px solid var(--accent);outline-offset:0;border-color:transparent}
+.primary{background:var(--accent);color:var(--accent-ink);font-weight:600;padding:0 16px;border-radius:12px;min-height:46px}
+.sugg{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.sugg button{padding:7px 12px;border-radius:999px;background:var(--accent-soft);font-size:14px}
+
+.sect{font-size:13px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:var(--accent);margin:18px 2px 6px;display:flex;align-items:center;gap:8px}
+.sect button{font:inherit;letter-spacing:inherit;text-transform:inherit;color:inherit;display:flex;align-items:center;gap:6px;min-height:36px}
+.sect .sp{flex:1}
+.sect .link{text-transform:none;letter-spacing:0;font-weight:500;color:var(--late)}
+.items{list-style:none;margin:0;padding:0;background:var(--surface);border:1px solid var(--line);border-radius:16px;overflow:hidden;box-shadow:0 1px 2px rgba(20,40,70,.05)}
+.item{display:flex;align-items:stretch;border-top:1px solid var(--line)}
+.item:first-child{border-top:0}
+.item.late{box-shadow:inset 3px 0 0 var(--late)}
+.check{flex:none;width:52px;display:grid;place-items:center}
+.check i{width:24px;height:24px;border-radius:50%;border:2px solid var(--muted);display:grid;place-items:center;transition:background .15s,border-color .15s}
+.check:hover i{border-color:var(--ok)}
+.item.done .check i{background:var(--ok);border-color:var(--ok)}
+.item.done .check i::after{content:"";width:10px;height:5px;border-left:2px solid #fff;border-bottom:2px solid #fff;transform:rotate(-45deg) translate(1px,-1px)}
+.body{flex:1;min-width:0;text-align:left;padding:11px 14px 11px 0;display:flex;flex-direction:column;gap:5px;justify-content:center;min-height:50px}
+.txt{overflow-wrap:anywhere}
+.item.done .txt{text-decoration:line-through;color:var(--muted)}
+.meta{display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-size:13px;color:var(--muted)}
+.chip{padding:2px 8px;border-radius:999px;background:var(--bg);white-space:nowrap}
+.chip.late{background:var(--late-soft);color:var(--late);font-weight:600}
+.chip.now{background:var(--soon-soft);color:var(--soon);font-weight:600}
+.chip.who{display:inline-flex;align-items:center;gap:5px;padding-left:3px}
+.chip.who .dot{width:16px;height:16px;font-size:10px}
+.note{flex-basis:100%;overflow-wrap:anywhere}
+.empty{padding:26px 16px;text-align:center;color:var(--muted)}
+.banner{margin:0 0 12px;padding:10px 14px;border-radius:10px;background:var(--late-soft);color:var(--late);font-weight:500}
+
+dialog{border:0;border-radius:16px;padding:0;background:var(--surface);color:var(--ink);width:min(460px,calc(100vw - 24px));max-height:calc(100% - 24px);box-shadow:0 20px 60px rgba(0,0,0,.3)}
+dialog::backdrop{background:rgba(10,20,18,.5)}
+dialog form{display:flex;flex-direction:column;gap:14px;padding:20px}
+dialog h3{font:700 20px/1.2 var(--display);margin:0}
+.f{display:flex;flex-direction:column;gap:5px;font-size:14px;font-weight:500;color:var(--muted)}
+.f input,.f select,.f textarea{padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--bg);color:var(--ink);font-size:16px;font-weight:400;width:100%}
+.f textarea{resize:vertical;min-height:64px}
+.row{display:flex;gap:10px;flex-wrap:wrap}
+.row>.f{flex:1;min-width:130px}
+.seg{display:flex;flex-wrap:wrap;gap:6px}
+.seg label{position:relative}
+.seg input{position:absolute;opacity:0;inset:0}
+.seg span{display:block;padding:8px 14px;border:1px solid var(--line);border-radius:999px;color:var(--ink);font-weight:500}
+.seg input:checked+span{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.seg input:focus-visible+span{outline:2px solid var(--accent);outline-offset:2px}
+.inline{display:flex;align-items:center;gap:8px;font-size:14px;color:var(--ink)}
+.inline input{width:18px;height:18px}
+.small{font-size:13px;color:var(--muted);margin:0}
+.actions{display:flex;gap:10px;align-items:center;margin-top:4px}
+.actions .sp{flex:1}
+.danger{color:var(--late);font-weight:600;padding:10px 4px;min-height:44px}
+.plain{padding:10px 14px;border-radius:12px;font-weight:600;color:var(--muted);min-height:46px}
+.people{display:flex;flex-direction:column;gap:8px}
+.people button{display:flex;align-items:center;gap:10px;padding:12px;border:1px solid var(--line);border-radius:12px;font-weight:500;text-align:left}
+.people button[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft)}
+
+.toast{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 14px;border-radius:12px;display:flex;gap:14px;align-items:center;max-width:calc(100vw - 32px);z-index:5;font-size:15px}
+.toast button{color:inherit;font-weight:700;text-decoration:underline;min-height:32px}
+
+.login{position:fixed;inset:0;z-index:10;background:var(--bg);display:grid;place-items:center;padding:20px;overflow:auto}
+.login form{width:min(380px,100%);display:flex;flex-direction:column;gap:14px;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:24px}
+.login h1{font:700 28px/1.1 var(--display);margin:0}
+.login .err{color:var(--late);font-weight:500;margin:0}
+.login .linkbtn{color:var(--accent);font-weight:600;min-height:40px;align-self:flex-start}
+.seedbtn{display:block;margin:0 auto}
+@media (max-width:759px){
+  .app{grid-template-columns:minmax(0,1fr)}
+  aside{border-right:0}
+  body.home main{display:none}
+  body:not(.home) aside{display:none}
+  .back{display:flex}
+  main{padding:10px 16px 90px}
+  .add{top:-10px}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body class="home">
+<section class="login" id="login">
+  <form id="login-form">
+    <h1>Onze lijstjes</h1>
+    <p class="small" id="login-msg">Even kijken of je al bent ingelogd…</p>
+    <label class="f" for="li-email">E-mailadres<input id="li-email" type="email" autocomplete="username" required></label>
+    <label class="f" for="li-pass">Wachtwoord<input id="li-pass" type="password" autocomplete="current-password" required></label>
+    <p class="err" id="li-err" hidden></p>
+    <button class="primary" type="submit">Inloggen</button>
+    <button class="linkbtn" id="li-reset" type="button">Wachtwoord vergeten</button>
+  </form>
+</section>
+<div class="app">
+  <aside>
+    <div class="brand">
+      <h1>Onze lijstjes</h1>
+      <button class="me" id="me-btn" type="button">Wie ben jij?</button>
+    </div>
+    <ul class="lists" id="nav"></ul>
+    <button class="ghost" id="new-list" type="button">+ Nieuwe lijst</button>
+  </aside>
+  <main>
+    <div class="head">
+      <button class="back" id="back" type="button" aria-label="Terug naar alle lijsten">‹ Lijsten</button>
+      <h2 id="title">Vandaag</h2>
+      <button class="icon-btn" id="list-menu" type="button" aria-label="Lijst aanpassen" hidden>
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><circle cx="4" cy="10" r="1.7"/><circle cx="10" cy="10" r="1.7"/><circle cx="16" cy="10" r="1.7"/></svg>
+      </button>
+    </div>
+    <div class="banner" id="banner" hidden></div>
+    <div class="add" id="add" hidden>
+      <form id="add-form" autocomplete="off">
+        <input id="add-input" type="text" placeholder="Toevoegen…" aria-label="Nieuw item" enterkeyhint="done">
+        <button class="primary" type="submit">Voeg toe</button>
+      </form>
+      <div class="sugg" id="sugg"></div>
+    </div>
+    <div id="content"><p class="empty">Lijstjes laden…</p></div>
+  </main>
+</div>
+
+<dialog id="dlg-item">
+  <form id="item-form" method="dialog">
+    <h3>Item aanpassen</h3>
+    <label class="f" for="f-text">Wat<input id="f-text" type="text" required></label>
+    <label class="f" id="f-cat-row" for="f-cat">Categorie<select id="f-cat"></select></label>
+    <label class="f" for="f-notes">Notitie<textarea id="f-notes" rows="2"></textarea></label>
+    <div class="f">Voor wie<div class="seg" id="f-who"></div></div>
+    <div class="row">
+      <label class="f" for="f-due">Datum<input id="f-due" type="date"></label>
+      <label class="f" for="f-repeat">Herhalen
+        <select id="f-repeat">
+          <option value="none">Niet herhalen</option>
+          <option value="d1">Elke dag</option>
+          <option value="w1">Elke week</option>
+          <option value="w2">Elke 2 weken</option>
+          <option value="m1">Elke maand</option>
+          <option value="custom">Aangepast…</option>
+        </select>
+      </label>
+    </div>
+    <div class="row" id="f-custom" hidden>
+      <label class="f" for="f-every">Elke<input id="f-every" type="number" min="1" max="365" value="3" inputmode="numeric"></label>
+      <label class="f" for="f-unit">Eenheid
+        <select id="f-unit"><option value="day">dagen</option><option value="week">weken</option><option value="month">maanden</option></select>
+      </label>
+    </div>
+    <label class="inline" id="f-nth-row" for="f-nth" hidden><input id="f-nth" type="checkbox"><span id="f-nth-label"></span></label>
+    <label class="f" for="f-list">Lijst<select id="f-list"></select></label>
+    <p class="small" id="f-info"></p>
+    <div class="actions">
+      <button class="danger" id="f-delete" type="button">Verwijderen</button>
+      <span class="sp"></span>
+      <button class="plain" id="f-cancel" type="button">Annuleren</button>
+      <button class="primary" type="submit">Opslaan</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="dlg-list">
+  <form id="list-form" method="dialog">
+    <h3 id="l-heading">Nieuwe lijst</h3>
+    <label class="f" for="l-name">Naam<input id="l-name" type="text" required maxlength="60"></label>
+    <div class="f">Soort
+      <div class="seg">
+        <label><input type="radio" name="l-kind" id="l-kind-shopping" value="shopping"><span>Boodschappen</span></label>
+        <label><input type="radio" name="l-kind" id="l-kind-todos" value="todos"><span>Taken</span></label>
+        <label><input type="radio" name="l-kind" id="l-kind-other" value="other"><span>Overig</span></label>
+      </div>
+    </div>
+    <div class="actions">
+      <button class="danger" id="l-delete" type="button">Lijst verwijderen</button>
+      <span class="sp"></span>
+      <button class="plain" id="l-cancel" type="button">Annuleren</button>
+      <button class="primary" type="submit">Opslaan</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="dlg-me">
+  <form id="me-form" method="dialog">
+    <h3>Wie ben jij?</h3>
+    <p class="small">Je keuze hoort bij je account. Zo zie je wie iets heeft toegevoegd of afgevinkt.</p>
+    <div class="people" id="people"></div>
+    <div class="row">
+      <label class="f" for="p-name">Naam toevoegen<input id="p-name" type="text" maxlength="30"></label>
+    </div>
+    <div class="actions">
+      <button class="danger" id="logout" type="button">Uitloggen</button>
+      <span class="sp"></span>
+      <button class="plain" id="me-close" type="button">Sluiten</button>
+      <button class="primary" type="submit">Naam toevoegen</button>
+    </div>
+  </form>
+</dialog>
+
+<div class="toast" id="toast" hidden><span id="toast-msg"></span><button id="toast-undo" type="button">Ongedaan maken</button></div>
+
+<script type="module">
+import {firebaseConfig} from "./config.js";
+import {SEED} from "./seed.js";
+import {initializeApp} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
+import {getAuth,onAuthStateChanged,signInWithEmailAndPassword,signOut,sendPasswordResetEmail} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
+import {initializeFirestore,persistentLocalCache,persistentMultipleTabManager,doc,collection,setDoc,updateDoc,deleteDoc,onSnapshot} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+
+const fbApp=initializeApp(firebaseConfig);
+const auth=getAuth(fbApp);
+let fs;
+try{fs=initializeFirestore(fbApp,{localCache:persistentLocalCache({tabManager:persistentMultipleTabManager()})})}
+catch(e){fs=initializeFirestore(fbApp,{})}
+/* dun laagje zodat de rest van de code leest als db.doc(pad).set(...) */
+const DB={
+  doc:function(path){var r=doc(fs,path);return{set:function(d){return setDoc(r,d)},update:function(d){return updateDoc(r,d)},delete:function(){return deleteDoc(r)}}},
+  collection:function(name){return{onSnapshot:function(next,err){return onSnapshot(collection(fs,name),{includeMetadataChanges:true},next,err)}}}
+};
+(function(){
+var $=function(id){return document.getElementById(id)};
+var S={db:null,uid:null,memory:{},lists:[],items:[],people:[],ready:{lists:false,items:false},cur:"today",me:null,showDone:false,editing:null,editingList:null,undo:null};
+var LCOLORS=["#f59f00","#2bb673","#e2474c","#8a5cf6","#12a5b8","#ec6aa0","#5b7cfa","#d9730d"];
+var COLORS=["#0b6e5b","#b3401a","#3b5bb5","#8a4f9e","#8a6400","#2f7d8c"];
+var ICON={
+  shopping:'<svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 3h2.5l2 9.5h8.5l2-7H5.2"/><circle cx="7.5" cy="16" r="1.2"/><circle cx="14" cy="16" r="1.2"/></svg>',
+  todos:'<svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="14" height="14" rx="3"/><path d="M6.5 10.2l2.3 2.3 4.7-5"/></svg>',
+  other:'<svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><path d="M7 5h10M7 10h10M7 15h10"/><circle cx="3.5" cy="5" r=".8"/><circle cx="3.5" cy="10" r=".8"/><circle cx="3.5" cy="15" r=".8"/></svg>',
+  today:'<svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="14" height="13" rx="3"/><path d="M3 8h14M7 2.5v3M13 2.5v3"/></svg>'
+};
+
+/* ---------- boodschappen: categorieën en geheugen ---------- */
+var CATS=[["groente","Groente & fruit"],["brood","Brood & banket"],["zuivel","Zuivel & eieren"],["kaas","Kaas"],["vlees","Vlees & vleeswaren"],["vis","Vis"],["vega","Vegetarisch"],["diepvries","Diepvries"],["houdbaar","Pasta, rijst & conserven"],["ontbijt","Ontbijt & beleg"],["snacks","Snoep & snacks"],["dranken","Dranken"],["huishoud","Huishouden"],["verzorging","Verzorging & drogist"],["dieren","Huisdieren"],["overig","Overig"]].map(function(c){return{id:c[0],name:c[1]}});
+var WORDS={groente:"appel peer banaan sinaasappel mandarijn citroen druiven aardbei tomaat komkommer sla paprika ui uien knoflook wortel aardappel broccoli bloemkool courgette champignon spinazie prei avocado fruit groente",brood:"brood bolletjes croissant beschuit crackers wraps pistolet stokbrood",zuivel:"melk yoghurt kwark vla boter margarine room eieren ei karnemelk slagroom",kaas:"kaas mozzarella feta parmezaan",vlees:"gehakt kip kipfilet biefstuk worst spek ham salami rookworst hamburger vlees",vis:"zalm vis tonijn kibbeling garnalen haring makreel",vega:"tofu vegaburger vegetarisch",diepvries:"diepvries ijs patat friet pizza frikandel kaassoufle kroket bitterballen",houdbaar:"pasta spaghetti macaroni rijst bonen soep saus ketchup mayo mayonaise olie azijn meel suiker zout peper kruiden bouillon noedels",ontbijt:"hagelslag pindakaas jam muesli cornflakes havermout honing stroop",snacks:"chips koek koekjes chocolade drop snoep nootjes popcorn",dranken:"cola water sap koffie thee bier wijn frisdrank limonade siroop",huishoud:"wc-papier toiletpapier keukenrol afwasmiddel wasmiddel vaatwastabletten vuilniszakken schoonmaak allesreiniger sponzen bakpapier folie",verzorging:"shampoo tandpasta zeep douchegel deodorant scheermesjes paracetamol pleisters tandenborstel",dieren:"kattenvoer hondenvoer kattenbak visvoer"};
+function catName(id){for(var i=0;i<CATS.length;i++)if(CATS[i].id===id)return CATS[i].name;return""}
+function stripQty(t){return String(t||"").trim().replace(/^\d+[.,]?\d*\s*(x|st|stuks?|kg|kilo|gr?|gram|l|liter|ml|cl|pak(ken)?|zak(ken)?|fles(sen)?|blik(ken)?)?\s+/i,"").trim()||String(t||"").trim()}
+function normKey(t){return stripQty(t).toLowerCase().replace(/\s+/g," ")}
+function memId(k){var id=k.replace(/\//g,"_").slice(0,120);return !id||id==="."||id===".."||/^__.*__$/.test(id)?"":id}
+function guessCat(k){
+  var parts=k.split(" ");
+  for(var c in WORDS){var w=WORDS[c].split(" ");for(var i=0;i<w.length;i++)if(parts.indexOf(w[i])>=0||k===w[i])return c}
+  for(var c2 in WORDS){var w2=WORDS[c2].split(" ");for(var j=0;j<w2.length;j++)if(w2[j].length>3&&k.indexOf(w2[j])>=0)return c2}
+  return null;
+}
+function remember(text,cat){
+  var k=normKey(text),id=memId(k);if(!id||!S.db)return;
+  S.db.doc("memory/"+id).set({key:k,text:stripQty(text).slice(0,120),cat:cat||null,lastAt:Date.now()}).catch(function(){});
+}
+function isShop(listId){var l=listById(listId);return !!(l&&l.kind==="shopping")}
+
+/* ---------- datums ---------- */
+function pad(n){return String(n).padStart(2,"0")}
+function todayStr(){var d=new Date();return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate())}
+function toUTC(s){var p=s.split("-").map(Number);return new Date(Date.UTC(p[0],p[1]-1,p[2]))}
+function fromUTC(d){return d.getUTCFullYear()+"-"+pad(d.getUTCMonth()+1)+"-"+pad(d.getUTCDate())}
+function addDays(s,n){var d=toUTC(s);d.setUTCDate(d.getUTCDate()+n);return fromUTC(d)}
+function diffDays(a,b){return Math.round((toUTC(a)-toUTC(b))/864e5)}
+function dim(y,m){return new Date(Date.UTC(y,m+1,0)).getUTCDate()}
+function stepDue(s,r){
+  var every=Math.max(1,r.every||1);
+  if(r.unit==="day")return addDays(s,every);
+  if(r.unit==="week")return addDays(s,7*every);
+  var d=toUTC(s),y=d.getUTCFullYear(),m=d.getUTCMonth()+every;
+  y+=Math.floor(m/12);m=m%12;
+  if(r.mode==="nth"){
+    var wd=r.wd!=null?r.wd:d.getUTCDay(),nth=r.nth||Math.ceil(d.getUTCDate()/7);
+    var first=new Date(Date.UTC(y,m,1)).getUTCDay();
+    var day=1+((wd-first+7)%7)+(nth-1)*7;
+    while(day>dim(y,m))day-=7;
+    return fromUTC(new Date(Date.UTC(y,m,day)));
+  }
+  return fromUTC(new Date(Date.UTC(y,m,Math.min(r.day||d.getUTCDate(),dim(y,m)))));
+}
+function nextDue(due,r,today){var d=stepDue(due,r),g=0;while(d<=today&&g++<2000)d=stepDue(d,r);return d}
+var FMT=new Intl.DateTimeFormat("nl-NL",{weekday:"short",day:"numeric",month:"short",timeZone:"UTC"});
+var FMTY=new Intl.DateTimeFormat("nl-NL",{day:"numeric",month:"short",year:"numeric",timeZone:"UTC"});
+var WD=["zondag","maandag","dinsdag","woensdag","donderdag","vrijdag","zaterdag"];
+function fmtDate(s){return diffDays(s,todayStr())>300||diffDays(s,todayStr())<-300?FMTY.format(toUTC(s)):FMT.format(toUTC(s))}
+function dueLabel(s){
+  var n=diffDays(s,todayStr());
+  if(n===0)return"vandaag";if(n===1)return"morgen";
+  if(n===-1)return"1 dag te laat";if(n<0)return(-n)+" dagen te laat";
+  return fmtDate(s);
+}
+function repeatLabel(r){
+  if(!r)return"";
+  var e=r.every||1,t;
+  if(r.unit==="day")t=e===1?"Elke dag":"Elke "+e+" dagen";
+  else if(r.unit==="week")t=e===1?"Elke week":"Elke "+e+" weken";
+  else t=e===1?"Elke maand":"Elke "+e+" maanden";
+  if(r.unit==="month"&&r.mode==="nth")t+=" op de "+r.nth+"e "+WD[r.wd];
+  return t;
+}
+
+/* ---------- hulpjes ---------- */
+function h(tag,props){
+  var el=document.createElement(tag),i,k;
+  if(props)for(k in props){
+    if(k==="class")el.className=props[k];
+    else if(k==="text")el.textContent=props[k];
+    else if(k==="html")el.innerHTML=props[k];
+    else if(k.slice(0,2)==="on")el.addEventListener(k.slice(2),props[k]);
+    else if(props[k]!=null&&props[k]!==false)el.setAttribute(k,props[k]);
+  }
+  for(i=2;i<arguments.length;i++){var c=arguments[i];if(c!=null)el.appendChild(typeof c==="string"?document.createTextNode(c):c)}
+  return el;
+}
+function rid(){return"x"+Math.random().toString(36).slice(2,8)+Date.now().toString(36)}
+function person(id){for(var i=0;i<S.people.length;i++)if(S.people[i].id===id)return S.people[i];return null}
+function pname(id){var p=person(id);return p?String(p.name||""):""}
+function pcolor(id){for(var i=0;i<S.people.length;i++)if(S.people[i].id===id)return COLORS[i%COLORS.length];return"#777"}
+function dot(id){var n=pname(id);return h("span",{class:"dot",style:"background:"+pcolor(id),text:(n[0]||"?").toUpperCase()})}
+function listById(id){for(var i=0;i<S.lists.length;i++)if(S.lists[i].id===id)return S.lists[i];return null}
+function isUpcoming(it,t){return !it.done&&it.repeat&&it.due&&it.due>t}
+function isLate(it,t){return !it.done&&it.due&&it.due<t}
+function banner(msg){var b=$("banner");b.textContent=msg||"";b.hidden=!msg}
+function store(k,v){try{if(v===undefined)return localStorage.getItem(k);localStorage.setItem(k,v)}catch(e){return null}}
+
+function write(p){
+  return Promise.resolve(p).then(function(){return true},function(e){
+    if(e&&e.code==="permission-denied")banner("Opslaan is geweigerd. Dit account heeft geen toegang tot de lijstjes.");
+    else banner("Opslaan lukte niet. Controleer je verbinding en probeer het opnieuw.");
+    return false;
+  });
+}
+function itemRef(id){return S.db.doc("items/"+id)}
+
+/* ---------- toast ---------- */
+var toastTimer=null;
+function toast(msg,undo){
+  S.undo=undo||null;$("toast-msg").textContent=msg;$("toast-undo").hidden=!undo;$("toast").hidden=false;
+  clearTimeout(toastTimer);toastTimer=setTimeout(function(){$("toast").hidden=true;S.undo=null},6000);
+}
+$("toast-undo").addEventListener("click",function(){var u=S.undo;$("toast").hidden=true;S.undo=null;if(u)u()});
+
+/* ---------- acties ---------- */
+function tick(it){
+  if(!S.db)return;
+  var t=todayStr();
+  if(it.done){write(itemRef(it.id).update({done:false,doneAt:null,doneBy:null,createdAt:Date.now()}));return}
+  if(it.repeat&&it.due){
+    var prev={due:it.due,lastDone:it.lastDone||null,lastDoneBy:it.lastDoneBy||null};
+    var nd=nextDue(it.due,it.repeat,t);
+    write(itemRef(it.id).update({due:nd,lastDone:t,lastDoneBy:S.me||null})).then(function(ok){
+      if(ok)toast("Gedaan. Volgende keer: "+fmtDate(nd),function(){write(itemRef(it.id).update(prev))});
+    });
+    return;
+  }
+  write(itemRef(it.id).update({done:true,doneAt:Date.now(),doneBy:S.me||null})).then(function(ok){
+    if(ok)toast("Afgevinkt",function(){write(itemRef(it.id).update({done:false,doneAt:null,doneBy:null}))});
+  });
+}
+function addItem(text){
+  text=text.trim();if(!text||!S.db||S.cur==="today")return;
+  var low=text.toLowerCase(),same=null;
+  S.items.forEach(function(it){if(it.listId===S.cur&&String(it.text||"").toLowerCase()===low&&(!same||!it.done))same=it});
+  if(same&&!same.done){toast("Dat staat er al op");return}
+  var cat=null;
+  if(isShop(S.cur)){var k=normKey(text),m=S.memory[k];cat=m&&m.cat?m.cat:guessCat(k);remember(text,cat)}
+  if(same){write(itemRef(same.id).update({done:false,doneAt:null,doneBy:null,createdAt:Date.now(),createdBy:S.me||null,cat:same.cat||cat}));return}
+  write(itemRef(rid()).set({listId:S.cur,text:text.slice(0,300),cat:cat,notes:"",done:false,createdAt:Date.now(),createdBy:S.me||null,assignee:null,due:null,repeat:null,lastDone:null,doneAt:null,doneBy:null}));
+}
+function deleteMany(ids){
+  var i=0;
+  function next(){if(i>=ids.length)return Promise.resolve(true);return write(itemRef(ids[i++]).delete()).then(function(ok){return ok?next():false})}
+  return next();
+}
+function twoStep(btn,label,fn){
+  var armed=false,timer=null,orig=label;
+  btn.addEventListener("click",function(){
+    if(!armed){armed=true;btn.textContent="Zeker weten? Tik nog eens";timer=setTimeout(function(){armed=false;btn.textContent=orig},4000);return}
+    clearTimeout(timer);armed=false;btn.textContent=orig;fn();
+  });
+}
+
+/* ---------- navigatie ---------- */
+function go(id){
+  var want=id==null?"":(id==="today"?"#vandaag":"#l-"+id);
+  if(location.hash!==want){try{location.hash=want}catch(e){}}
+  route();
+}
+function route(){
+  var hsh=location.hash||"";
+  var home=!hsh;
+  if(hsh==="#vandaag")S.cur="today";
+  else if(hsh.indexOf("#l-")===0)S.cur=hsh.slice(3);
+  else S.cur="today";
+  document.body.classList.toggle("home",home);
+  S.showDone=false;$("add-input").value="";
+  render();
+}
+window.addEventListener("hashchange",route);
+$("back").addEventListener("click",function(){go(null)});
+
+/* ---------- tekenen ---------- */
+function render(){renderNav();renderMain();renderMe()}
+function renderMe(){
+  var b=$("me-btn");b.textContent="";
+  if(S.me&&person(S.me)){b.className="me";b.appendChild(dot(S.me));b.appendChild(document.createTextNode(pname(S.me)))}
+  else{b.className="me ask";b.textContent="Wie ben jij?"}
+}
+function navRow(id,icon,name,n,late,current,color){
+  return h("li",null,h("button",{type:"button","aria-current":current?"true":null,onclick:function(){go(id)}},
+    h("span",{class:"badge",html:icon,style:"background:"+color}),h("span",{class:"nm",text:name}),
+    h("span",{class:"count"+(late?" late":""),text:n?String(n):""})));
+}
+function renderNav(){
+  var nav=$("nav"),t=todayStr(),wide=!document.body.classList.contains("home")||window.matchMedia("(min-width:760px)").matches;
+  nav.textContent="";
+  var dueNow=S.items.filter(function(it){return !it.done&&it.due&&it.due<=t});
+  nav.appendChild(navRow("today",ICON.today,"Vandaag",dueNow.length,dueNow.some(function(it){return it.due<t}),wide&&S.cur==="today","#1689e0"));
+  nav.appendChild(h("li",{class:"sep","aria-hidden":"true"}));
+  S.lists.forEach(function(l,li){
+    var open=S.items.filter(function(it){return it.listId===l.id&&!it.done&&!isUpcoming(it,t)});
+    nav.appendChild(navRow(l.id,ICON[l.kind]||ICON.other,String(l.name||"Lijst"),open.length,open.some(function(it){return isLate(it,t)}),wide&&S.cur===l.id,LCOLORS[li%LCOLORS.length]));
+  });
+}
+function row(it,t,showList){
+  var late=isLate(it,t);
+  var meta=h("span",{class:"meta"});
+  if(it.done){
+    var who=pname(it.doneBy),when=it.doneAt?fmtDate(fromLocal(it.doneAt)):"";
+    if(who||when)meta.appendChild(h("span",{text:"Afgevinkt"+(who?" door "+who:"")+(when?" · "+when:"")}));
+  }else{
+    if(it.due)meta.appendChild(h("span",{class:"chip"+(late?" late":(it.due===t?" now":"")),text:dueLabel(it.due)}));
+    if(it.repeat)meta.appendChild(h("span",{class:"chip",text:"↻ "+repeatLabel(it.repeat)}));
+    if(it.assignee&&person(it.assignee))meta.appendChild(h("span",{class:"chip who"},dot(it.assignee),pname(it.assignee)));
+    if(showList){var l=listById(it.listId);if(l)meta.appendChild(h("span",{class:"chip",text:String(l.name||"")}))}
+    if(it.notes)meta.appendChild(h("span",{class:"note",text:String(it.notes)}));
+  }
+  return h("li",{class:"item"+(it.done?" done":"")+(late?" late":"")},
+    h("button",{class:"check",type:"button","aria-label":(it.done?"Terugzetten: ":"Afvinken: ")+it.text,onclick:function(){tick(it)}},h("i")),
+    h("button",{class:"body",type:"button","aria-label":"Aanpassen: "+it.text,onclick:function(){openItem(it)}},
+      h("span",{class:"txt",text:String(it.text||"")}),meta.childNodes.length?meta:null));
+}
+function fromLocal(ms){var d=new Date(ms);return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate())}
+function byDue(a,b){return a.due<b.due?-1:a.due>b.due?1:(b.createdAt||0)-(a.createdAt||0)}
+function section(title,items,t,showList){
+  var ul=h("ul",{class:"items"});items.forEach(function(it){ul.appendChild(row(it,t,showList))});
+  var frag=document.createDocumentFragment();
+  if(title)frag.appendChild(h("div",{class:"sect",text:title}));
+  frag.appendChild(ul);return frag;
+}
+function renderMain(){
+  var c=$("content"),t=todayStr();
+  var list=S.cur==="today"?null:listById(S.cur);
+  $("list-menu").hidden=!list;$("add").hidden=!list||!S.db;
+  if(false){$("title").textContent="Onze lijstjes";c.textContent="";c.appendChild(h("p",{class:"empty",text:"De lijstjes zijn hier niet bereikbaar. Open deze pagina terwijl je bent ingelogd bij Claude."}));return}
+  if(!S.ready.lists||!S.ready.items){$("title").textContent=list?String(list.name):"Vandaag";return}
+  if(S.cur!=="today"&&!list){S.cur="today";if(location.hash){try{location.hash=""}catch(e){}document.body.classList.add("home")}}
+  c.textContent="";
+  if(S.cur==="today"){
+    $("title").textContent="Vandaag";
+    var now=S.items.filter(function(it){return !it.done&&it.due&&it.due<=t}).sort(byDue);
+    var soon=S.items.filter(function(it){return !it.done&&it.due&&it.due>t&&diffDays(it.due,t)<=7}).sort(byDue);
+    if(!now.length)c.appendChild(h("p",{class:"empty",text:S.lists.length?"Niets dat vandaag moet. Kies een lijst om iets toe te voegen.":"Er zijn nog geen lijsten. Maak er een met ‘Nieuwe lijst’, of laad jullie lijsten uit FamilyWall in."}));
+    if(!S.lists.length&&!S.items.length&&S.online)c.appendChild(h("button",{class:"primary seedbtn",type:"button",text:"Lijsten uit FamilyWall inladen",onclick:function(ev){
+      ev.currentTarget.disabled=true;ev.currentTarget.textContent="Bezig…";
+      write(Promise.all(SEED.map(function(o){return S.db.doc(o.path).set(o.data)})));
+    }}));
+    else c.appendChild(section("Nu te doen",now,t,true));
+    if(soon.length)c.appendChild(section("Komende 7 dagen",soon,t,true));
+    return;
+  }
+  $("title").textContent=String(list.name||"Lijst");
+  $("add-input").placeholder=list.kind==="shopping"?"Wat moet er mee?":"Toevoegen…";
+  var mine=S.items.filter(function(it){return it.listId===list.id});
+  var open=mine.filter(function(it){return !it.done&&!isUpcoming(it,t)}).sort(function(a,b){
+    if(a.due&&b.due)return byDue(a,b);if(a.due)return -1;if(b.due)return 1;return(b.createdAt||0)-(a.createdAt||0)});
+  var up=mine.filter(function(it){return isUpcoming(it,t)}).sort(byDue);
+  var done=mine.filter(function(it){return it.done}).sort(function(a,b){return(b.doneAt||0)-(a.doneAt||0)});
+  if(open.length&&list.kind==="shopping"){
+    var groups={},keys=0;
+    open.forEach(function(it){var k=catName(it.cat)?it.cat:"";if(!groups[k]){groups[k]=[];keys++}groups[k].push(it)});
+    if(groups[""])c.appendChild(section(keys>1?"Nog geen categorie":"",groups[""],t,false));
+    CATS.forEach(function(ct){if(groups[ct.id])c.appendChild(section(ct.name,groups[ct.id],t,false))});
+  }
+  else if(open.length)c.appendChild(section(up.length?"Nu":"",open,t,false));
+  else c.appendChild(h("p",{class:"empty",text:mine.length?"Alles is gedaan.":"Deze lijst is nog leeg."}));
+  if(up.length)c.appendChild(section("Komt eraan",up,t,false));
+  if(done.length){
+    var head=h("div",{class:"sect"},
+      h("button",{type:"button","aria-expanded":S.showDone?"true":"false",onclick:function(){S.showDone=!S.showDone;renderMain()}},(S.showDone?"▾ ":"▸ ")+"Afgevinkt ("+done.length+")"),
+      h("span",{class:"sp"}));
+    if(S.showDone){
+      var wipe=h("button",{class:"link",type:"button",text:"Wis afgevinkte"});
+      twoStep(wipe,"Wis afgevinkte",function(){deleteMany(done.map(function(d){return d.id}))});
+      head.appendChild(wipe);
+    }
+    c.appendChild(head);
+    if(S.showDone){
+      var ul=h("ul",{class:"items"});done.slice(0,60).forEach(function(it){ul.appendChild(row(it,t,false))});c.appendChild(ul);
+      if(done.length>60)c.appendChild(h("p",{class:"small",style:"margin:8px 4px",text:"De laatste 60 van "+done.length+" afgevinkte items."}));
+    }
+  }
+}
+
+/* ---------- toevoegen + suggesties ---------- */
+function renderSugg(){
+  var box=$("sugg"),q=$("add-input").value.trim().toLowerCase();box.textContent="";
+  if(!q)return;
+  var seen={},hits=[];
+  if(isShop(S.cur)){
+    var onList={};S.items.forEach(function(it){if(it.listId===S.cur&&!it.done)onList[normKey(it.text)]=1});
+    Object.keys(S.memory).forEach(function(k){var m=S.memory[k],at=k.indexOf(q);if(at<0||onList[k])return;hits.push({text:String(m.text||k),at:at,when:m.lastAt||0})});
+  }else S.items.forEach(function(it){
+    if(it.listId!==S.cur||!it.done)return;
+    var tx=String(it.text||""),lo=tx.toLowerCase(),at=lo.indexOf(q);
+    if(at<0||seen[lo])return;seen[lo]=1;hits.push({text:tx,at:at,when:it.doneAt||0});
+  });
+  hits.sort(function(a,b){return(a.at?1:0)-(b.at?1:0)||b.when-a.when});
+  hits.slice(0,6).forEach(function(x){
+    box.appendChild(h("button",{type:"button",text:"+ "+x.text,onclick:function(){addItem(x.text);$("add-input").value="";renderSugg();$("add-input").focus()}}));
+  });
+}
+$("add-input").addEventListener("input",renderSugg);
+$("add-form").addEventListener("submit",function(e){e.preventDefault();var i=$("add-input");addItem(i.value);i.value="";renderSugg();i.focus()});
+
+/* ---------- item-venster ---------- */
+function syncRepeatUI(){
+  var v=$("f-repeat").value,due=$("f-due").value;
+  $("f-custom").hidden=v!=="custom";
+  var month=v==="m1"||(v==="custom"&&$("f-unit").value==="month");
+  $("f-nth-row").hidden=!(month&&due);
+  if(month&&due){var d=toUTC(due);$("f-nth-label").textContent="Altijd op de "+Math.ceil(d.getUTCDate()/7)+"e "+WD[d.getUTCDay()]+" van de maand"}
+}
+["f-repeat","f-due","f-unit"].forEach(function(id){$(id).addEventListener("change",syncRepeatUI)});
+function openItem(it){
+  S.editing=it;
+  $("f-text").value=String(it.text||"");$("f-notes").value=String(it.notes||"");$("f-due").value=it.due||"";
+  var who=$("f-who");who.textContent="";
+  [{id:"",name:"Niemand"}].concat(S.people).forEach(function(p,i){
+    who.appendChild(h("label",null,h("input",{type:"radio",name:"f-who",id:"f-who-"+i,value:p.id,checked:(it.assignee||"")===p.id?"":null}),h("span",{text:String(p.name||"")})));
+  });
+  var cs=$("f-cat");cs.textContent="";
+  [{id:"",name:"Geen categorie"}].concat(CATS).forEach(function(ct){cs.appendChild(h("option",{value:ct.id,text:ct.name,selected:(it.cat||"")===ct.id?"":null}))});
+  $("f-cat-row").hidden=!isShop(it.listId);
+  var r=it.repeat,key="none";
+  if(r){key=({day:"d",week:"w",month:"m"})[r.unit]+(r.every||1);if(["d1","w1","w2","m1"].indexOf(key)<0){key="custom";$("f-every").value=r.every||1;$("f-unit").value=r.unit}}
+  $("f-repeat").value=key;$("f-nth").checked=!!(r&&r.mode==="nth");
+  var sel=$("f-list");sel.textContent="";
+  S.lists.forEach(function(l){sel.appendChild(h("option",{value:l.id,text:String(l.name||""),selected:l.id===it.listId?"":null}))});
+  var info=[];
+  if(pname(it.createdBy))info.push("Toegevoegd door "+pname(it.createdBy));
+  if(it.lastDone)info.push("Laatst gedaan "+fmtDate(it.lastDone)+(pname(it.lastDoneBy)?" door "+pname(it.lastDoneBy):""));
+  $("f-info").textContent=info.join(" · ");$("f-info").hidden=!info.length;
+  syncRepeatUI();$("dlg-item").showModal();
+}
+$("f-cancel").addEventListener("click",function(){$("dlg-item").close()});
+$("item-form").addEventListener("submit",function(e){
+  e.preventDefault();var it=S.editing;if(!it||!S.db)return;
+  var text=$("f-text").value.trim();if(!text)return;
+  var due=$("f-due").value||null,v=$("f-repeat").value,rep=null;
+  if(v!=="none"){
+    var unit,every;
+    if(v==="custom"){unit=$("f-unit").value;every=Math.min(365,Math.max(1,parseInt($("f-every").value,10)||1))}
+    else{unit=({d:"day",w:"week",m:"month"})[v[0]];every=+v.slice(1)}
+    if(!due)due=todayStr();
+    rep={unit:unit,every:every};
+    if(unit==="month"){var d=toUTC(due);if($("f-nth").checked){rep.mode="nth";rep.nth=Math.ceil(d.getUTCDate()/7);rep.wd=d.getUTCDay()}else rep.day=d.getUTCDate()}
+  }
+  var whoEl=document.querySelector('input[name="f-who"]:checked');
+  var patch={text:text.slice(0,300),notes:$("f-notes").value.trim().slice(0,2000),due:due,repeat:null,assignee:(whoEl&&whoEl.value)||null,listId:$("f-list").value||it.listId};
+  if(isShop(patch.listId)&&!$("f-cat-row").hidden){
+    patch.cat=$("f-cat").value||null;
+    if(patch.cat!==(it.cat||null)||patch.text!==it.text)remember(patch.text,patch.cat);
+  }
+  if(rep&&it.done){patch.done=false;patch.doneAt=null;patch.doneBy=null}
+  $("dlg-item").close();
+  /* repeat is een object: eerst leegmaken zodat oude velden (mode, nth) niet blijven hangen */
+  write(itemRef(it.id).update(patch)).then(function(ok){if(ok&&rep)write(itemRef(it.id).update({repeat:rep}))});
+});
+twoStep($("f-delete"),"Verwijderen",function(){var it=S.editing;$("dlg-item").close();if(it&&S.db)write(itemRef(it.id).delete())});
+
+/* ---------- lijst-venster ---------- */
+function openList(l){
+  S.editingList=l;
+  $("l-heading").textContent=l?"Lijst aanpassen":"Nieuwe lijst";
+  $("l-name").value=l?String(l.name||""):"";
+  var k=l?(l.kind||"other"):"todos";$("l-kind-"+(ICON[k]&&k!=="today"?k:"other")).checked=true;
+  $("l-delete").hidden=!l;$("dlg-list").showModal();
+}
+$("new-list").addEventListener("click",function(){openList(null)});
+$("list-menu").addEventListener("click",function(){var l=listById(S.cur);if(l)openList(l)});
+$("l-cancel").addEventListener("click",function(){$("dlg-list").close()});
+$("list-form").addEventListener("submit",function(e){
+  e.preventDefault();if(!S.db)return;
+  var name=$("l-name").value.trim();if(!name)return;
+  var kEl=document.querySelector('input[name="l-kind"]:checked'),kind=kEl?kEl.value:"other",l=S.editingList;
+  $("dlg-list").close();
+  if(l){write(S.db.doc("lists/"+l.id).update({name:name,kind:kind}));return}
+  var id=rid(),order=S.lists.reduce(function(m,x){return Math.max(m,x.order||0)},0)+1;
+  write(S.db.doc("lists/"+id).set({name:name,kind:kind,order:order,createdAt:Date.now()})).then(function(ok){if(ok)go(id)});
+});
+twoStep($("l-delete"),"Lijst verwijderen",function(){
+  var l=S.editingList;$("dlg-list").close();if(!l||!S.db)return;
+  var ids=S.items.filter(function(it){return it.listId===l.id}).map(function(it){return it.id});
+  deleteMany(ids).then(function(ok){if(ok)write(S.db.doc("lists/"+l.id).delete()).then(function(){go(null)})});
+});
+
+/* ---------- wie ben jij ---------- */
+function renderPeople(){
+  var box=$("people");box.textContent="";
+  S.people.forEach(function(p){
+    box.appendChild(h("button",{type:"button","aria-pressed":S.me===p.id?"true":"false",onclick:function(){
+      $("dlg-me").close();
+      var old=S.me&&S.me!==p.id?S.me:null;
+      write(S.db.doc("people/"+p.id).update({uid:S.uid})).then(function(ok){if(ok&&old)write(S.db.doc("people/"+old).update({uid:null}))});
+    }},dot(p.id),String(p.name||"")));
+  });
+}
+$("me-btn").addEventListener("click",function(){renderPeople();$("p-name").value="";$("dlg-me").showModal()});
+$("me-close").addEventListener("click",function(){$("dlg-me").close()});
+$("me-form").addEventListener("submit",function(e){
+  e.preventDefault();var n=$("p-name").value.trim();if(!n||!S.db)return;
+  var id=rid();$("p-name").value="";
+  var old=S.me;$("dlg-me").close();
+  write(S.db.doc("people/"+id).set({name:n.slice(0,30),createdAt:Date.now(),uid:S.uid})).then(function(ok){if(ok&&old)write(S.db.doc("people/"+old).update({uid:null}))});
+});
+
+/* ---------- start ---------- */
+route();
+var loadTimer=null,started=false,asked=false;
+function fresh(snap){
+  S.online=!snap.metadata.fromCache;
+  if(S.online){clearTimeout(loadTimer);if($("banner").textContent.indexOf("offline")>0)banner("")}
+}
+function dead(e){
+  clearTimeout(loadTimer);
+  banner(e&&e.code==="permission-denied"?"Dit account heeft geen toegang tot de lijstjes. Log in met het juiste e-mailadres.":"De verbinding met de lijstjes is verbroken. Open de app opnieuw.");
+}
+function rows(snap){return snap.docs.map(function(d){var o=Object.assign({},d.data());o.id=d.id;return o})}
+function start(db){
+  S.db=db;
+  loadTimer=setTimeout(function(){banner("Je lijkt offline. Je ziet de laatst bekende lijstjes; wijzigingen worden verstuurd zodra er weer verbinding is.")},10000);
+  db.collection("lists").onSnapshot(function(s){
+    S.lists=rows(s).sort(function(a,b){return(a.order||0)-(b.order||0)||String(a.name).localeCompare(String(b.name))});
+    S.ready.lists=true;fresh(s);render();
+  },dead);
+  db.collection("items").onSnapshot(function(s){S.items=rows(s);S.ready.items=true;fresh(s);render();renderSugg()},dead);
+  db.collection("memory").onSnapshot(function(s){
+    var m={};s.docs.forEach(function(d){var o=d.data();if(o&&o.key)m[o.key]=o});S.memory=m;
+  },function(){});
+  db.collection("people").onSnapshot(function(s){
+    S.people=rows(s).sort(function(a,b){return(a.createdAt||0)-(b.createdAt||0)});
+    var mine=S.people.filter(function(p){return p.uid===S.uid})[0];S.me=mine?mine.id:null;
+    render();
+    if(!S.me&&!asked&&!s.metadata.fromCache&&S.people.length){asked=true;renderPeople();$("p-name").value="";if(!$("dlg-me").open)$("dlg-me").showModal()}
+  },function(){});
+}
+var AUTH_ERR={"auth/invalid-credential":"E-mailadres of wachtwoord klopt niet.","auth/wrong-password":"E-mailadres of wachtwoord klopt niet.","auth/user-not-found":"E-mailadres of wachtwoord klopt niet.","auth/invalid-email":"Dat is geen geldig e-mailadres.","auth/too-many-requests":"Te veel pogingen. Wacht even en probeer het opnieuw.","auth/network-request-failed":"Geen verbinding. Controleer je internet."};
+function liErr(msg){$("li-err").textContent=msg||"";$("li-err").hidden=!msg}
+$("login-form").addEventListener("submit",function(e){
+  e.preventDefault();liErr("");
+  signInWithEmailAndPassword(auth,$("li-email").value.trim(),$("li-pass").value).catch(function(err){liErr(AUTH_ERR[err.code]||"Inloggen lukte niet. Probeer het opnieuw.")});
+});
+$("li-reset").addEventListener("click",function(){
+  var em=$("li-email").value.trim();if(!em){liErr("Vul eerst je e-mailadres in.");return}
+  sendPasswordResetEmail(auth,em).then(function(){liErr("Als dit adres een account heeft, staat er nu een mail met een link in je inbox.")},function(err){liErr(AUTH_ERR[err.code]||"Versturen lukte niet.")});
+});
+$("logout").addEventListener("click",function(){signOut(auth)});
+onAuthStateChanged(auth,function(u){
+  if(u){S.uid=u.uid;$("login").hidden=true;if(!started){started=true;start(DB)}}
+  else if(started){location.reload()}
+  else{$("login").hidden=false;$("login-msg").textContent="Log in met het account dat voor jullie is aangemaakt."}
+});
+if("serviceWorker" in navigator)navigator.serviceWorker.register("sw.js").catch(function(){});
+/* om middernacht verschuift 'vandaag': ververs het beeld als de pagina weer in beeld komt */
+document.addEventListener("visibilitychange",function(){if(!document.hidden)render()});
+})();
+</script>
+</body>
+</html>
