@@ -1,4 +1,5 @@
 // Stand van de FamilyWall-lijsten op 13 november 2026.
+export const SEED_LABEL = "Lijsten uit FamilyWall inladen";
 export const SEED = [
 {
 "path": "people/maarten",

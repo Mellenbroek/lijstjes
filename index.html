@@ -271,7 +271,7 @@ dialog h3{font:700 20px/1.2 var(--display);margin:0}
 
 <script type="module">
 import {firebaseConfig} from "./config.js";
-import {SEED} from "./seed.js";
+import {SEED,SEED_LABEL} from "./seed.js";
 import {initializeApp} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
 import {getAuth,onAuthStateChanged,signInWithEmailAndPassword,signOut,sendPasswordResetEmail} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
 import {initializeFirestore,persistentLocalCache,persistentMultipleTabManager,doc,collection,setDoc,updateDoc,deleteDoc,onSnapshot} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
@@ -522,8 +522,8 @@ function renderMain(){
     $("title").textContent="Vandaag";
     var now=S.items.filter(function(it){return !it.done&&it.due&&it.due<=t}).sort(byDue);
     var soon=S.items.filter(function(it){return !it.done&&it.due&&it.due>t&&diffDays(it.due,t)<=7}).sort(byDue);
-    if(!now.length)c.appendChild(h("p",{class:"empty",text:S.lists.length?"Niets dat vandaag moet. Kies een lijst om iets toe te voegen.":"Er zijn nog geen lijsten. Maak er een met ‘Nieuwe lijst’, of laad jullie lijsten uit FamilyWall in."}));
-    if(!S.lists.length&&!S.items.length&&S.online)c.appendChild(h("button",{class:"primary seedbtn",type:"button",text:"Lijsten uit FamilyWall inladen",onclick:function(ev){
+    if(!now.length)c.appendChild(h("p",{class:"empty",text:S.lists.length?"Niets dat vandaag moet. Kies een lijst om iets toe te voegen.":"Er zijn nog geen lijsten. Maak er een met ‘Nieuwe lijst’."}));
+    if(!S.lists.length&&!S.items.length&&S.online&&SEED.length)c.appendChild(h("button",{class:"primary seedbtn",type:"button",text:SEED_LABEL||"Startlijsten aanmaken",onclick:function(ev){
       ev.currentTarget.disabled=true;ev.currentTarget.textContent="Bezig…";
       write(Promise.all(SEED.map(function(o){return S.db.doc(o.path).set(o.data)})));
     }}));
@@ -714,7 +714,7 @@ function start(db){
     S.people=rows(s).sort(function(a,b){return(a.createdAt||0)-(b.createdAt||0)});
     var mine=S.people.filter(function(p){return p.uid===S.uid})[0];S.me=mine?mine.id:null;
     render();
-    if(!S.me&&!asked&&!s.metadata.fromCache&&S.people.length){asked=true;renderPeople();$("p-name").value="";if(!$("dlg-me").open)$("dlg-me").showModal()}
+    if(!S.me&&!asked&&!s.metadata.fromCache){asked=true;renderPeople();$("p-name").value="";if(!$("dlg-me").open)$("dlg-me").showModal()}
   },function(){});
 }
 var AUTH_ERR={"auth/invalid-credential":"E-mailadres of wachtwoord klopt niet.","auth/wrong-password":"E-mailadres of wachtwoord klopt niet.","auth/user-not-found":"E-mailadres of wachtwoord klopt niet.","auth/invalid-email":"Dat is geen geldig e-mailadres.","auth/too-many-requests":"Te veel pogingen. Wacht even en probeer het opnieuw.","auth/network-request-failed":"Geen verbinding. Controleer je internet."};
