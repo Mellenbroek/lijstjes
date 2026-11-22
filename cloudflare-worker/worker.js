@@ -50,7 +50,8 @@ export default {
     if (lang !== "nl") {
       convertUnits(recipe);
       if (env && env.AI && new URL(request.url).searchParams.get("vertaal") !== "0") {
-        try { await translateRecipe(recipe, lang, env.AI); recipe.translated = true; }
+        const pick = new URL(request.url).searchParams.get("model") || DEFAULT_MODEL;
+        try { recipe.model = await translateRecipe(recipe, lang, env.AI, pick); recipe.translated = true; }
         catch { recipe.translateFailed = true; }
       }
       if (recipe._ing) { recipe.ingredients = recipe._ing.map((x) => x.prefix + x.rest); delete recipe._ing; }
@@ -242,7 +243,7 @@ function convertLine(line) {
 function fToC(f) { return Math.round(((f - 32) * 5) / 9 / 5) * 5; }
 function convertText(t) {
   return String(t)
-    .replace(/(\d{3})\s*°?\s*(?:degrees\s*)?F\b\s*(?:\(\s*\d{2,3}\s*°?\s*C\s*\)|\/\s*\d{2,3}\s*°?\s*C\b)?/gi, (a, f) => fToC(+f) + " °C")
+    .replace(/(\d{3})\s*°?\s*(?:degrees\s*)?(?:F\b|Fahrenheit)\s*(?:\(\s*\d{2,3}\s*°?\s*(?:degrees\s*)?C(?:elsius)?\s*\)|\/\s*\d{2,3}\s*°?\s*(?:degrees\s*)?C\b)?/gi, (a, f) => fToC(+f) + " °C")
     .replace(/(\d+(?:\.\d+)?)\s*[x×]\s*(\d+(?:\.\d+)?)[- ]?inch(?:es)?/gi, (a, x, y) => Math.round(x * 2.54) + "x" + Math.round(y * 2.54) + " cm")
     .replace(/(\d+(?:\.\d+)?)[- ]?(?:inch(?:es)?|")(?=[\s,.)]|$)/gi, (a, x) => (Math.round(x * 2.54 * 2) / 2 + " cm").replace(".", ","));
 }
@@ -262,7 +263,61 @@ async function tr(ai, text, src) {
   if (!res) throw new Error("geen vertaling");
   return String(res).trim();
 }
-async function translateRecipe(r, src, ai) {
+const LLMS = {
+  mistral: "@cf/mistralai/mistral-small-3.1-24b-instruct",
+  gemma: "@cf/google/gemma-3-12b-it",
+  llama70: "@cf/meta/llama-3.3-70b-instruct-fp8-fast",
+  scout: "@cf/meta/llama-4-scout-17b-16e-instruct",
+};
+const DEFAULT_MODEL = "mistral";
+const LANG_NAME = { en: "Engels", de: "Duits", fr: "Frans", es: "Spaans", it: "Italiaans", pt: "Portugees" };
+const PROMPT = (src) => `Je vertaalt recepten uit het ${LANG_NAME[src] || "Engels"} naar natuurlijk Nederlands, zoals in een Nederlands kookboek.
+Regels:
+- Vertaal alleen de tekstwaarden in de JSON. Antwoord met uitsluitend JSON in precies dezelfde vorm, met evenveel ingrediënten en stappen in dezelfde volgorde.
+- Getallen, hoeveelheden en eenheden (g, ml, el, tl, °C, cm) blijven precies staan. Voeg niets toe en laat niets weg.
+- Gebruik gangbare Nederlandse namen: all-purpose flour = bloem, self-rising flour = zelfrijzend bakmeel, baking soda = zuiveringszout, baking powder = bakpoeder, heavy cream = slagroom, sour cream = zure room, cream cheese = roomkaas, ground beef = rundergehakt, scallions/green onions = lente-uitjes, cilantro = koriander, zucchini = courgette, eggplant = aubergine, bell pepper = paprika, confectioners' sugar = poedersuiker, kosher salt = grof zout, stock/broth = bouillon.
+- Kookwerkwoorden: grease = invetten, preheat = voorverwarmen, whisk = kloppen, fold in = spatelen, simmer = laten sudderen, sauté = bakken.
+- Ingrediëntregels kort houden zoals "250 g bloem" of "2 eieren, losgeklopt". Kopjes in hoofdletters blijven hoofdletters.`;
+async function translateLLM(ai, model, src, payload) {
+  const out = await ai.run(model, {
+    messages: [{ role: "system", content: PROMPT(src) }, { role: "user", content: JSON.stringify(payload) }],
+    max_tokens: 4000, temperature: 0.2,
+  });
+  let txt = out && out.response;
+  let data = typeof txt === "object" && txt ? txt : null;
+  if (!data) {
+    txt = String(txt || "");
+    const a = txt.indexOf("{"), b = txt.lastIndexOf("}");
+    if (a < 0 || b <= a) throw new Error("geen json");
+    data = JSON.parse(txt.slice(a, b + 1));
+  }
+  if (!data || !Array.isArray(data.ingredients) || data.ingredients.length !== payload.ingredients.length ||
+      !Array.isArray(data.steps) || data.steps.length !== payload.steps.length) throw new Error("vorm klopt niet");
+  return data;
+}
+function spaced(t) { return String(t || "").replace(/([.!?])(?=[A-ZÀ-Ý])/g, "$1 ").trim(); }
+async function translateRecipe(r, src, ai, pick) {
+  const ing = (r._ing || r.ingredients.map((l) => ({ prefix: "", rest: l }))).slice(0, 60);
+  const parts = r.steps ? r.steps.split(/\n\n/).slice(0, 60) : [];
+  const nums = parts.map((p) => (p.match(/^(\d+\.\s+)/) || [""])[0]);
+  if (pick !== "m2m100") {
+    const model = LLMS[pick] || LLMS[DEFAULT_MODEL];
+    try {
+      const d = await translateLLM(ai, model, src, {
+        name: r.name, ingredients: ing.map((x) => x.prefix + x.rest), steps: parts.map((p, i) => p.slice(nums[i].length)), notes: r.notes || "",
+      });
+      r.name = spaced(d.name || r.name).slice(0, 120);
+      r.ingredients = d.ingredients.map((x) => lowerFirst(spaced(x)));
+      r.steps = d.steps.map((x, i) => nums[i] + spaced(x)).join("\n\n");
+      if (r.notes) r.notes = spaced(d.notes || r.notes);
+      delete r._ing;
+      return model;
+    } catch { /* dan per regel met het vertaalmodel */ }
+  }
+  await translateM2M(r, src, ai);
+  return MODEL;
+}
+async function translateM2M(r, src, ai) {
   const ing = r._ing || r.ingredients.map((l) => ({ prefix: "", rest: l }));
   // de bereiding per stap vertalen, nummers en kopjes blijven staan
   const parts = r.steps ? r.steps.split(/\n\n/) : [];
@@ -272,7 +327,7 @@ async function translateRecipe(r, src, ai) {
   parts.slice(0, 40).forEach((p, i) => {
     const m = p.match(/^(\d+\.\s+)([\s\S]*)$/);
     const isHead = !m && p === p.toUpperCase();
-    jobs.push(tr(ai, m ? m[2] : (isHead ? p.toLowerCase() : p), src).then((v) => { parts[i] = m ? m[1] + v : isHead ? v.toUpperCase() : v; }));
+    jobs.push(tr(ai, m ? m[2] : (isHead ? p.toLowerCase() : p), src).then((v) => { v = spaced(v); parts[i] = m ? m[1] + v : isHead ? v.toUpperCase() : v; }));
   });
   if (r.notes) jobs.push(tr(ai, r.notes, src).then((v) => { r.notes = v; }));
   await Promise.all(jobs);
