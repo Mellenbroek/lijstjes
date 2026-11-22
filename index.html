@@ -934,8 +934,10 @@ function fetchRecipe(){
   $("r-link").value=link;
   if(!IMPORT_URL||IMPORT_URL.indexOf("__")===0){linkMsg("Ophalen via een link is nog niet ingesteld.",true);return}
   var btn=$("r-fetch");btn.disabled=true;btn.textContent="Bezig…";linkMsg("Recept ophalen…");
-  var ctl=typeof AbortController!=="undefined"?new AbortController():null,timer=setTimeout(function(){if(ctl)ctl.abort()},20000);
-  fetch(IMPORT_URL+"?url="+encodeURIComponent(link),ctl?{signal:ctl.signal}:{}).then(function(res){
+  var slow=setTimeout(function(){linkMsg("Nog even geduld: een buitenlands recept wordt vertaald, dat kan een halve minuut duren.")},5000);
+  var ctl=typeof AbortController!=="undefined"?new AbortController():null,timer=setTimeout(function(){if(ctl)ctl.abort()},60000);
+  fetch(IMPORT_URL+"?model=llama70&url="+encodeURIComponent(link),ctl?{signal:ctl.signal}:{}).then(function(res){
+    clearTimeout(slow);
     return res.json().catch(function(){return{error:"ophalen-mislukt"}}).then(function(j){return{ok:res.ok,j:j}});
   }).then(function(x){
     var j=x.j||{};
@@ -959,6 +961,7 @@ function fetchRecipe(){
       :j.translateFailed?" Vertalen lukte deze keer niet, dus het staat er in de oorspronkelijke taal.":"";
     linkMsg("Gevonden: "+ing.length+" ingrediënten"+(nSteps?" en "+nSteps+" stappen":"")+(j.serves?", voor "+j.serves+" personen":"")+"."+extra+(extra?"":" Kijk het na en sla op."));
   }).catch(function(){
+    clearTimeout(slow);
     linkMsg("Ophalen lukte niet. Controleer je verbinding en probeer het opnieuw.",true);
   }).then(function(){clearTimeout(timer);btn.disabled=false;btn.textContent="Ophalen"});
 }

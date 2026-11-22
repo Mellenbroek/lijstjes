@@ -1,7 +1,7 @@
 // Elke kopie van de app (eigen map op hetzelfde domein) houdt een eigen cache bij
 // en ruimt alleen zijn eigen oude caches op.
 const PATH=new URL(self.registration.scope).pathname;
-const V="v5";
+const V="v6";
 const C="lijstjes|"+PATH+"|"+V;
 const SHELL=["./","index.html","config.js","seed.js","recepten.js","recepten-lib.js","manifest.webmanifest","icon-192.png","icon-512.png"];
 self.addEventListener("install",e=>{e.waitUntil(caches.open(C).then(c=>c.addAll(SHELL)).then(()=>self.skipWaiting()))});
