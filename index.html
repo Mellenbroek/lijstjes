@@ -954,7 +954,10 @@ function fetchRecipe(){
     if(j.notes&&!$("r-notes").value.trim())$("r-notes").value=String(j.notes);
     $("r-url").value=safeUrl(j.url)||safeUrl(link);
     var nSteps=String(j.steps||"").split(/\n\n/).filter(function(t){return /^\d+\. /.test(t)}).length;
-    linkMsg("Gevonden: "+ing.length+" ingrediënten"+(nSteps?" en "+nSteps+" stappen":"")+(j.serves?", voor "+j.serves+" personen":"")+". Kijk het na en sla op.");
+    var LANG={en:"het Engels",de:"het Duits",fr:"het Frans",es:"het Spaans",it:"het Italiaans",pt:"het Portugees"};
+    var extra=j.translated?" Automatisch vertaald uit "+(LANG[j.lang]||"een andere taal")+" en omgerekend naar gram en °C; kijk het extra goed na."
+      :j.translateFailed?" Vertalen lukte deze keer niet, dus het staat er in de oorspronkelijke taal.":"";
+    linkMsg("Gevonden: "+ing.length+" ingrediënten"+(nSteps?" en "+nSteps+" stappen":"")+(j.serves?", voor "+j.serves+" personen":"")+"."+extra+(extra?"":" Kijk het na en sla op."));
   }).catch(function(){
     linkMsg("Ophalen lukte niet. Controleer je verbinding en probeer het opnieuw.",true);
   }).then(function(){clearTimeout(timer);btn.disabled=false;btn.textContent="Ophalen"});
