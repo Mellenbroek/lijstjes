@@ -176,6 +176,9 @@ a.chip:hover{text-decoration:underline}
 .checklist input{width:20px;height:20px;margin:1px 0 0;flex:none;accent-color:var(--accent)}
 .checklist .src{display:block;font-size:12px;color:var(--muted);font-weight:400}
 .hint{font-weight:400;font-size:13px}
+.linkrow{display:flex;gap:8px}
+.linkrow input{flex:1;min-width:0}
+.linkrow .btn2{min-height:44px;padding:0 14px}
 .linkbtn{color:var(--accent);font-weight:600;min-height:40px}
 .listhead{display:flex;align-items:center;justify-content:space-between;font-size:14px;font-weight:500;color:var(--muted);margin-bottom:-8px}
 #dlg-shop .actions button,#dlg-meal .actions button,#dlg-recipe .actions button{white-space:nowrap}
@@ -314,6 +317,10 @@ a.chip:hover{text-decoration:underline}
 <dialog id="dlg-recipe">
   <form id="recipe-form" method="dialog" autocomplete="off">
     <h3 id="r-heading">Nieuw recept</h3>
+    <div class="f" id="r-link-row">Recept van een link
+      <div class="linkrow"><input id="r-link" type="url" inputmode="url" placeholder="Plak een link naar een recept" aria-label="Link naar een recept"><button class="btn2" id="r-fetch" type="button">Ophalen</button></div>
+      <span class="hint" id="r-link-msg" role="status"></span>
+    </div>
     <label class="f" for="r-name">Naam<input id="r-name" type="text" required maxlength="120"></label>
     <div class="row">
       <label class="f" for="r-serves">Voor hoeveel personen<input id="r-serves" type="number" min="1" max="99" inputmode="numeric"></label>
@@ -916,9 +923,51 @@ function renderRecipe(c,r){
   if(planned.length)c.appendChild(mealSection("Op het menu",planned,true));
 }
 
+/* recept van een link */
+var IMPORT_URL="https://lijstjes-recepten.jmgellenbroek.workers.dev/";
+var IMPORT_ERR={"geen-recept":"Op deze pagina staat geen recept dat de app kan lezen; de link is wel bewaard.","ongeldige-link":"Dat lijkt geen geldige link.","niet-toegestaan":"Het ophalen is geweigerd.","ophalen-mislukt":"Die pagina kon niet worden opgehaald."};
+function firstLink(t){var m=String(t||"").match(/https?:\/\/[^\s"'<>]+/i);return m?m[0].replace(/[).,;!?]+$/,""):""}
+function linkMsg(t,bad){var e=$("r-link-msg");e.textContent=t||"";e.style.color=bad?"var(--late)":""}
+function fetchRecipe(){
+  var link=firstLink($("r-link").value);
+  if(!link){linkMsg("Plak eerst een link die met http begint.",true);return}
+  $("r-link").value=link;
+  if(!IMPORT_URL||IMPORT_URL.indexOf("__")===0){linkMsg("Ophalen via een link is nog niet ingesteld.",true);return}
+  var btn=$("r-fetch");btn.disabled=true;btn.textContent="Bezig…";linkMsg("Recept ophalen…");
+  var ctl=typeof AbortController!=="undefined"?new AbortController():null,timer=setTimeout(function(){if(ctl)ctl.abort()},20000);
+  fetch(IMPORT_URL+"?url="+encodeURIComponent(link),ctl?{signal:ctl.signal}:{}).then(function(res){
+    return res.json().catch(function(){return{error:"ophalen-mislukt"}}).then(function(j){return{ok:res.ok,j:j}});
+  }).then(function(x){
+    var j=x.j||{};
+    if(!x.ok||j.error){
+      if(!$("r-url").value)$("r-url").value=safeUrl(link);
+      var msg=IMPORT_ERR[j.error]||"Ophalen lukte niet.";
+      if(j.error==="ophalen-mislukt"&&j.status)msg+=" De site gaf code "+j.status+(j.status===403||j.status===429?": deze site blokkeert het automatisch ophalen.":".");
+      linkMsg(msg+" Vul het recept zelf in.",true);return;
+    }
+    if(!$("r-name").value.trim()&&j.name)$("r-name").value=String(j.name).slice(0,120);
+    if(j.serves)$("r-serves").value=j.serves;
+    if(j.minutes)$("r-min").value=j.minutes;
+    var ing=(j.ingredients||[]).map(function(l){return RL.normalizeLine(String(l))});
+    if(ing.length)$("r-ing").value=ing.join("\n");
+    if(j.steps)$("r-steps").value=String(j.steps);
+    if(j.notes&&!$("r-notes").value.trim())$("r-notes").value=String(j.notes);
+    $("r-url").value=safeUrl(j.url)||safeUrl(link);
+    var nSteps=String(j.steps||"").split(/\n\n/).filter(function(t){return /^\d+\. /.test(t)}).length;
+    linkMsg("Gevonden: "+ing.length+" ingrediënten"+(nSteps?" en "+nSteps+" stappen":"")+(j.serves?", voor "+j.serves+" personen":"")+". Kijk het na en sla op.");
+  }).catch(function(){
+    linkMsg("Ophalen lukte niet. Controleer je verbinding en probeer het opnieuw.",true);
+  }).then(function(){clearTimeout(timer);btn.disabled=false;btn.textContent="Ophalen"});
+}
+$("r-fetch").addEventListener("click",fetchRecipe);
+$("r-link").addEventListener("keydown",function(e){if(e.key==="Enter"){e.preventDefault();fetchRecipe()}});
+$("r-link").addEventListener("paste",function(){setTimeout(function(){if(firstLink($("r-link").value))fetchRecipe()},0)});
+
 /* recept bewerken */
-function openRecipe(r,name){
+function openRecipe(r,name,link){
   S.editingRecipe=r||null;
+  $("r-link-row").hidden=!!(r&&hasContent(r));
+  $("r-link").value=link||"";linkMsg("");
   $("r-heading").textContent=r?"Recept bewerken":"Nieuw recept";
   $("r-name").value=r?String(r.name||""):(name||"");
   $("r-serves").value=r&&r.serves?r.serves:"";
@@ -929,6 +978,7 @@ function openRecipe(r,name){
   $("r-url").value=r?String(r.url||""):"";
   $("r-delete").hidden=!r;
   $("dlg-recipe").showModal();
+  if(link)fetchRecipe();
 }
 function intOrNull(v,max){var n=parseInt(v,10);return n>0&&n<=max?n:null}
 $("r-cancel").addEventListener("click",function(){$("dlg-recipe").close()});
@@ -1182,6 +1232,19 @@ $("shop-form").addEventListener("submit",function(e){
   });
 });
 
+/* delen naar de app: Android geeft de link mee als ?url= of in ?text= */
+(function(){
+  try{
+    var q=new URLSearchParams(location.search),link=firstLink(q.get("url"))||firstLink(q.get("text"))||firstLink(q.get("title"));
+    if(link){S.pendingShare=link;history.replaceState(null,"",location.pathname+"#recepten")}
+  }catch(e){}
+})();
+function handleShare(){
+  if(!S.pendingShare||!S.db||!S.ready.recipes)return;
+  var link=S.pendingShare;S.pendingShare=null;
+  go("recipes");openRecipe(null,"",link);
+}
+
 /* ---------- start ---------- */
 route();
 var loadTimer=null,started=false,asked=false;
@@ -1202,7 +1265,7 @@ function start(db){
     S.ready.lists=true;fresh(s);render();
   },dead);
   db.collection("items").onSnapshot(function(s){S.items=rows(s);S.ready.items=true;fresh(s);render();renderSugg()},dead);
-  db.collection("recipes").onSnapshot(function(s){S.recipes=rows(s);S.ready.recipes=true;fresh(s);render()},dead);
+  db.collection("recipes").onSnapshot(function(s){S.recipes=rows(s);S.ready.recipes=true;fresh(s);render();handleShare()},dead);
   db.collection("meals").onSnapshot(function(s){S.meals=rows(s);S.ready.meals=true;fresh(s);render()},dead);
   db.collection("memory").onSnapshot(function(s){
     var m={};s.docs.forEach(function(d){var o=d.data();if(o&&o.key)m[o.key]=o});S.memory=m;
