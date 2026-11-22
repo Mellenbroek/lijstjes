@@ -1,7 +1,7 @@
 // Elke kopie van de app (eigen map op hetzelfde domein) houdt een eigen cache bij
 // en ruimt alleen zijn eigen oude caches op.
 const PATH=new URL(self.registration.scope).pathname;
-const V="v6";
+const V="v7";
 const C="lijstjes|"+PATH+"|"+V;
 const SHELL=["./","index.html","config.js","seed.js","recepten.js","recepten-lib.js","manifest.webmanifest","icon-192.png","icon-512.png"];
 self.addEventListener("install",e=>{e.waitUntil(caches.open(C).then(c=>c.addAll(SHELL)).then(()=>self.skipWaiting()))});
@@ -16,5 +16,6 @@ self.addEventListener("fetch",e=>{
   if(lib){e.respondWith(caches.open(C).then(c=>c.match(r).then(hit=>hit||fetch(r).then(res=>{c.put(r,res.clone());return res}))));return}
   // alleen bestanden van deze app zelf; submappen (andere kopieën) hebben hun eigen service worker
   if(u.origin!==location.origin||!u.pathname.startsWith(PATH)||u.pathname.slice(PATH.length).includes("/"))return;
-  e.respondWith(fetch(r).then(res=>{const copy=res.clone();caches.open(C).then(c=>c.put(r,copy));return res}).catch(()=>caches.match(r).then(hit=>hit||caches.match(new URL("index.html",self.registration.scope).href))));
+  // altijd even bij de server navragen of er een nieuwere versie is (snel dankzij ETag)
+  e.respondWith(fetch(r,{cache:"no-cache"}).then(res=>{const copy=res.clone();caches.open(C).then(c=>c.put(r,copy));return res}).catch(()=>caches.match(r).then(hit=>hit||caches.match(new URL("index.html",self.registration.scope).href))));
 });
