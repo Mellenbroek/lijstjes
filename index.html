@@ -139,6 +139,46 @@ dialog h3{font:700 20px/1.2 var(--display);margin:0}
 .login .err{color:var(--late);font-weight:500;margin:0}
 .login .linkbtn{color:var(--accent);font-weight:600;min-height:40px;align-self:flex-start}
 .seedbtn{display:block;margin:0 auto}
+/* recepten en weekmenu */
+dialog{overflow:auto}
+.tools{display:flex;gap:8px;margin:-4px 0 12px}
+.tools input{flex:1;min-width:0;padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:var(--surface);font-size:16px}
+.tools input:focus{outline:2px solid var(--accent);outline-offset:0;border-color:transparent}
+.item.nocheck .body{padding-left:16px}
+.btn2{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:46px;padding:0 16px;border-radius:12px;border:1.5px solid var(--accent);color:var(--accent);font-weight:700;background:var(--surface)}
+.btn2:hover{background:var(--accent-soft)}
+.ractions{display:flex;flex-wrap:wrap;gap:8px;margin:2px 0 6px}
+.rmeta{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 12px;font-size:14px;color:var(--muted)}
+a.chip{color:var(--accent);font-weight:600;text-decoration:none}
+a.chip:hover{text-decoration:underline}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px 16px;box-shadow:0 1px 2px rgba(20,40,70,.05)}
+.prose{white-space:pre-wrap;line-height:1.55;overflow-wrap:anywhere}
+.ing{list-style:none;margin:0;padding:4px 16px;background:var(--surface);border:1px solid var(--line);border-radius:16px}
+.ing li{padding:10px 0;border-top:1px solid var(--line);overflow-wrap:anywhere}
+.ing li:first-child{border-top:0}
+.stepper{display:inline-flex;align-items:center;gap:8px;color:var(--ink);font-weight:600;text-transform:none;letter-spacing:0;font-size:15px}
+.stepper button{width:36px;height:36px;border-radius:50%;border:1px solid var(--line);background:var(--surface);font-size:20px;font-weight:700;line-height:1;color:var(--accent)}
+.stepper button:hover{border-color:var(--accent)}
+.stepper .num{min-width:22px;text-align:center;font-variant-numeric:tabular-nums;font-size:17px}
+.weeknav{display:flex;align-items:center;gap:8px;margin-bottom:4px}
+.weeknav .wk{flex:1;display:flex;flex-direction:column;align-items:center;line-height:1.25}
+.weeknav .wk span{font-size:14px;color:var(--muted)}
+.day{margin-top:12px}
+.day-h{display:flex;align-items:center;gap:8px;margin:0 2px 6px;font-weight:800}
+.day-h .sp{flex:1}
+.day.past{opacity:.6}
+.addmeal{padding:6px 10px;border-radius:10px;color:var(--accent);font-weight:700;min-height:40px}
+.addmeal:hover{background:var(--accent-soft)}
+.footbar{margin-top:20px;display:flex;flex-direction:column;gap:8px}
+.checklist{display:flex;flex-direction:column;border:1px solid var(--line);border-radius:12px;overflow:hidden;max-height:46vh;overflow-y:auto}
+.checklist label{display:flex;gap:12px;align-items:flex-start;padding:11px 12px;border-top:1px solid var(--line);color:var(--ink);font-weight:500;cursor:pointer}
+.checklist label:first-child{border-top:0}
+.checklist input{width:20px;height:20px;margin:1px 0 0;flex:none;accent-color:var(--accent)}
+.checklist .src{display:block;font-size:12px;color:var(--muted);font-weight:400}
+.hint{font-weight:400;font-size:13px}
+.linkbtn{color:var(--accent);font-weight:600;min-height:40px}
+.listhead{display:flex;align-items:center;justify-content:space-between;font-size:14px;font-weight:500;color:var(--muted);margin-bottom:-8px}
+#dlg-shop .actions button,#dlg-meal .actions button,#dlg-recipe .actions button{white-space:nowrap}
 @media (max-width:759px){
   .app{grid-template-columns:minmax(0,1fr)}
   aside{border-right:0}
@@ -187,6 +227,10 @@ dialog h3{font:700 20px/1.2 var(--display);margin:0}
         <button class="primary" type="submit">Voeg toe</button>
       </form>
       <div class="sugg" id="sugg"></div>
+    </div>
+    <div class="tools" id="rtools" hidden>
+      <input id="r-search" type="search" placeholder="Zoek op naam of ingrediënt" aria-label="Recepten zoeken" autocomplete="off">
+      <button class="primary" id="r-new" type="button">+ Recept</button>
     </div>
     <div id="content"><p class="empty">Lijstjes laden…</p></div>
   </main>
@@ -267,11 +311,71 @@ dialog h3{font:700 20px/1.2 var(--display);margin:0}
   </form>
 </dialog>
 
+<dialog id="dlg-recipe">
+  <form id="recipe-form" method="dialog" autocomplete="off">
+    <h3 id="r-heading">Nieuw recept</h3>
+    <label class="f" for="r-name">Naam<input id="r-name" type="text" required maxlength="120"></label>
+    <div class="row">
+      <label class="f" for="r-serves">Voor hoeveel personen<input id="r-serves" type="number" min="1" max="99" inputmode="numeric"></label>
+      <label class="f" for="r-min">Tijd in minuten<input id="r-min" type="number" min="1" max="1440" inputmode="numeric"></label>
+    </div>
+    <label class="f" for="r-ing">Ingrediënten <span class="hint">één per regel, zoals ‘400 g gehakt’ of ‘2 uien’</span><textarea id="r-ing" rows="7"></textarea></label>
+    <label class="f" for="r-steps">Bereiding<textarea id="r-steps" rows="6"></textarea></label>
+    <label class="f" for="r-notes">Notities<textarea id="r-notes" rows="2"></textarea></label>
+    <label class="f" for="r-url">Link naar het recept<input id="r-url" type="url" inputmode="url" placeholder="https://"></label>
+    <div class="actions">
+      <button class="danger" id="r-delete" type="button">Verwijderen</button>
+      <span class="sp"></span>
+      <button class="plain" id="r-cancel" type="button">Annuleren</button>
+      <button class="primary" type="submit">Opslaan</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="dlg-meal">
+  <form id="meal-form" method="dialog" autocomplete="off">
+    <h3 id="m-heading">Gerecht plannen</h3>
+    <label class="f" for="m-date">Dag<input id="m-date" type="date" required></label>
+    <label class="f" for="m-dish">Wat eten jullie?<input id="m-dish" type="text" required maxlength="120" placeholder="Zoek een recept of typ iets"></label>
+    <div class="sugg" id="m-sugg"></div>
+    <p class="small" id="m-linked"></p>
+    <div class="f">Aantal personen<div id="m-serves"></div></div>
+    <button class="linkbtn" id="m-open" type="button">Recept openen</button>
+    <div class="actions">
+      <button class="danger" id="m-delete" type="button">Verwijderen</button>
+      <span class="sp"></span>
+      <button class="plain" id="m-cancel" type="button">Annuleren</button>
+      <button class="primary" type="submit">Opslaan</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="dlg-shop">
+  <form id="shop-form" method="dialog">
+    <h3 id="s-heading">Op de boodschappenlijst</h3>
+    <p class="small" id="s-sub"></p>
+    <div class="row" id="s-serves-row">
+      <label class="f" for="s-base">Recept is voor<input id="s-base" type="number" min="1" max="99" inputmode="numeric" placeholder="? personen"></label>
+      <div class="f">Ik kook voor<div id="s-target"></div></div>
+    </div>
+    <label class="f" id="s-list-row" for="s-list">Op welke lijst<select id="s-list"></select></label>
+    <div class="listhead"><span>Ingrediënten</span><button class="linkbtn" id="s-all" type="button">Alles uit</button></div>
+    <div class="checklist" id="s-items"></div>
+    <div class="actions">
+      <span class="sp"></span>
+      <button class="plain" id="s-cancel" type="button">Annuleren</button>
+      <button class="primary" id="s-go" type="submit">Zet op lijst</button>
+    </div>
+  </form>
+</dialog>
+
 <div class="toast" id="toast" hidden><span id="toast-msg"></span><button id="toast-undo" type="button">Ongedaan maken</button></div>
 
 <script type="module">
 import {firebaseConfig} from "./config.js";
 import {SEED,SEED_LABEL} from "./seed.js";
+import {RECIPES,RECIPES_LABEL} from "./recepten.js";
+import * as RL from "./recepten-lib.js";
 import {initializeApp} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
 import {getAuth,onAuthStateChanged,signInWithEmailAndPassword,signOut,sendPasswordResetEmail} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
 import {initializeFirestore,persistentLocalCache,persistentMultipleTabManager,doc,collection,setDoc,updateDoc,deleteDoc,onSnapshot} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
@@ -288,21 +392,23 @@ const DB={
 };
 (function(){
 var $=function(id){return document.getElementById(id)};
-var S={db:null,uid:null,memory:{},lists:[],items:[],people:[],ready:{lists:false,items:false},cur:"today",me:null,showDone:false,editing:null,editingList:null,undo:null};
+var S={db:null,uid:null,memory:{},lists:[],items:[],people:[],recipes:[],meals:[],weekStart:null,viewServes:{},shop:null,mRecipe:null,mServes:2,editingRecipe:null,editingMeal:null,ready:{lists:false,items:false,recipes:false,meals:false},cur:"today",me:null,showDone:false,editing:null,editingList:null,undo:null};
 var LCOLORS=["#f59f00","#2bb673","#e2474c","#8a5cf6","#12a5b8","#ec6aa0","#5b7cfa","#d9730d"];
 var COLORS=["#0b6e5b","#b3401a","#3b5bb5","#8a4f9e","#8a6400","#2f7d8c"];
 var ICON={
   shopping:'<svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 3h2.5l2 9.5h8.5l2-7H5.2"/><circle cx="7.5" cy="16" r="1.2"/><circle cx="14" cy="16" r="1.2"/></svg>',
   todos:'<svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="14" height="14" rx="3"/><path d="M6.5 10.2l2.3 2.3 4.7-5"/></svg>',
   other:'<svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><path d="M7 5h10M7 10h10M7 15h10"/><circle cx="3.5" cy="5" r=".8"/><circle cx="3.5" cy="10" r=".8"/><circle cx="3.5" cy="15" r=".8"/></svg>',
+  recipes:'<svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 3.5h9.5a2 2 0 0 1 2 2V17H6a2 2 0 0 1-2-2z"/><path d="M4 15a2 2 0 0 1 2-2h9.5"/><path d="M8 7h4M8 9.8h3"/></svg>',
+  menu:'<svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 2.5v5.5M4 2.5v3.5a2 2 0 0 0 4 0V2.5M6 8v9.5"/><path d="M14.5 17.5V2.5c-2 1.2-3 3.6-3 6.5 0 1.4.8 2 2 2h1"/></svg>',
   today:'<svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="14" height="13" rx="3"/><path d="M3 8h14M7 2.5v3M13 2.5v3"/></svg>'
 };
 
 /* ---------- boodschappen: categorieën en geheugen ---------- */
 var CATS=[["groente","Groente & fruit"],["brood","Brood & banket"],["zuivel","Zuivel & eieren"],["kaas","Kaas"],["vlees","Vlees & vleeswaren"],["vis","Vis"],["vega","Vegetarisch"],["diepvries","Diepvries"],["houdbaar","Pasta, rijst & conserven"],["ontbijt","Ontbijt & beleg"],["snacks","Snoep & snacks"],["dranken","Dranken"],["huishoud","Huishouden"],["verzorging","Verzorging & drogist"],["dieren","Huisdieren"],["overig","Overig"]].map(function(c){return{id:c[0],name:c[1]}});
-var WORDS={groente:"appel peer banaan sinaasappel mandarijn citroen druiven aardbei tomaat komkommer sla paprika ui uien knoflook wortel aardappel broccoli bloemkool courgette champignon spinazie prei avocado fruit groente",brood:"brood bolletjes croissant beschuit crackers wraps pistolet stokbrood",zuivel:"melk yoghurt kwark vla boter margarine room eieren ei karnemelk slagroom",kaas:"kaas mozzarella feta parmezaan",vlees:"gehakt kip kipfilet biefstuk worst spek ham salami rookworst hamburger vlees",vis:"zalm vis tonijn kibbeling garnalen haring makreel",vega:"tofu vegaburger vegetarisch",diepvries:"diepvries ijs patat friet pizza frikandel kaassoufle kroket bitterballen",houdbaar:"pasta spaghetti macaroni rijst bonen soep saus ketchup mayo mayonaise olie azijn meel suiker zout peper kruiden bouillon noedels",ontbijt:"hagelslag pindakaas jam muesli cornflakes havermout honing stroop",snacks:"chips koek koekjes chocolade drop snoep nootjes popcorn",dranken:"cola water sap koffie thee bier wijn frisdrank limonade siroop",huishoud:"wc-papier toiletpapier keukenrol afwasmiddel wasmiddel vaatwastabletten vuilniszakken schoonmaak allesreiniger sponzen bakpapier folie",verzorging:"shampoo tandpasta zeep douchegel deodorant scheermesjes paracetamol pleisters tandenborstel",dieren:"kattenvoer hondenvoer kattenbak visvoer"};
+var WORDS={groente:"basilicum peterselie koriander munt bieslook dille rucola asperges kool spitskool boerenkool sperziebonen andijvie lente-ui bosui sjalot gember limoen tuinerwten erwten mais appel peer banaan sinaasappel mandarijn citroen druiven aardbei tomaat komkommer sla paprika ui uien knoflook wortel aardappel broccoli bloemkool courgette champignon spinazie prei avocado fruit groente",brood:"brood bolletjes croissant beschuit crackers wraps pistolet stokbrood",zuivel:"crème melk yoghurt kwark vla boter margarine room eieren ei karnemelk slagroom",kaas:"kaas mozzarella feta parmezaan parmazaanse burrata ricotta mascarpone geitenkaas halloumi",vlees:"chorizo bacon spekjes shoarma kalkoen kip kipfilet biefstuk worst spek ham salami rookworst hamburger vlees",vis:"zeeduivel kabeljauw pangasius zalm vis tonijn kibbeling garnalen haring makreel",vega:"tofu vegaburger vegetarisch",diepvries:"diepvries ijs patat friet pizza frikandel kaassoufle kroket bitterballen",houdbaar:"tomatenblokjes passata tomatenpuree kikkererwten linzen couscous parelcouscous orzo risottorijst kokosmelk pesto noodles bakmeel bloem bakpoeder kerriepoeder ketjap sambal pasta spaghetti macaroni rijst bonen soep saus ketchup mayo mayonaise olie azijn meel suiker zout peper kruiden bouillon noedels",ontbijt:"hagelslag pindakaas jam muesli cornflakes havermout honing stroop",snacks:"chips koek koekjes chocolade drop snoep nootjes popcorn",dranken:"cola water sap koffie thee bier wijn frisdrank limonade siroop",huishoud:"wc-papier toiletpapier keukenrol afwasmiddel wasmiddel vaatwastabletten vuilniszakken schoonmaak allesreiniger sponzen bakpapier folie",verzorging:"shampoo tandpasta zeep douchegel deodorant scheermesjes paracetamol pleisters tandenborstel",dieren:"kattenvoer hondenvoer kattenbak visvoer"};
 function catName(id){for(var i=0;i<CATS.length;i++)if(CATS[i].id===id)return CATS[i].name;return""}
-function stripQty(t){return String(t||"").trim().replace(/^\d+[.,]?\d*\s*(x|st|stuks?|kg|kilo|gr?|gram|l|liter|ml|cl|pak(ken)?|zak(ken)?|fles(sen)?|blik(ken)?)?\s+/i,"").trim()||String(t||"").trim()}
+function stripQty(t){var p=RL.parseIng(t);return p.q!=null&&p.name?p.name:p.raw}
 function normKey(t){return stripQty(t).toLowerCase().replace(/\s+/g," ")}
 function memId(k){var id=k.replace(/\//g,"_").slice(0,120);return !id||id==="."||id===".."||/^__.*__$/.test(id)?"":id}
 function guessCat(k){
@@ -444,7 +550,7 @@ function twoStep(btn,label,fn){
 
 /* ---------- navigatie ---------- */
 function go(id){
-  var want=id==null?"":(id==="today"?"#vandaag":"#l-"+id);
+  var want=id==null?"":id==="today"?"#vandaag":id==="recipes"?"#recepten":id==="menu"?"#weekmenu":id.indexOf("recipe:")===0?"#recept-"+id.slice(7):"#l-"+id;
   if(location.hash!==want){try{location.hash=want}catch(e){}}
   route();
 }
@@ -452,6 +558,9 @@ function route(){
   var hsh=location.hash||"";
   var home=!hsh;
   if(hsh==="#vandaag")S.cur="today";
+  else if(hsh==="#recepten")S.cur="recipes";
+  else if(hsh==="#weekmenu")S.cur="menu";
+  else if(hsh.indexOf("#recept-")===0)S.cur="recipe:"+hsh.slice(8);
   else if(hsh.indexOf("#l-")===0)S.cur=hsh.slice(3);
   else S.cur="today";
   document.body.classList.toggle("home",home);
@@ -459,7 +568,7 @@ function route(){
   render();
 }
 window.addEventListener("hashchange",route);
-$("back").addEventListener("click",function(){go(null)});
+$("back").addEventListener("click",function(){go(S.cur.indexOf("recipe:")===0?"recipes":null)});
 
 /* ---------- tekenen ---------- */
 function render(){renderNav();renderMain();renderMe()}
@@ -478,6 +587,8 @@ function renderNav(){
   nav.textContent="";
   var dueNow=S.items.filter(function(it){return !it.done&&it.due&&it.due<=t});
   nav.appendChild(navRow("today",ICON.today,"Vandaag",dueNow.length,dueNow.some(function(it){return it.due<t}),wide&&S.cur==="today","#1689e0"));
+  nav.appendChild(navRow("menu",ICON.menu,"Weekmenu",0,false,wide&&S.cur==="menu","#ff7a45"));
+  nav.appendChild(navRow("recipes",ICON.recipes,"Recepten",0,false,wide&&(S.cur==="recipes"||S.cur.indexOf("recipe:")===0),"#9c6ade"));
   nav.appendChild(h("li",{class:"sep","aria-hidden":"true"}));
   S.lists.forEach(function(l,li){
     var open=S.items.filter(function(it){return it.listId===l.id&&!it.done&&!isUpcoming(it,t)});
@@ -512,8 +623,12 @@ function section(title,items,t,showList){
 }
 function renderMain(){
   var c=$("content"),t=todayStr();
-  var list=S.cur==="today"?null:listById(S.cur);
+  var food=S.cur==="recipes"||S.cur==="menu"||S.cur.indexOf("recipe:")===0;
+  var list=S.cur==="today"||food?null:listById(S.cur);
   $("list-menu").hidden=!list;$("add").hidden=!list||!S.db;
+  $("rtools").hidden=S.cur!=="recipes"||!S.db;
+  $("back").textContent=S.cur.indexOf("recipe:")===0?"‹ Recepten":"‹ Lijsten";
+  if(food){renderFood(c,t);return}
   if(false){$("title").textContent="Onze lijstjes";c.textContent="";c.appendChild(h("p",{class:"empty",text:"De lijstjes zijn hier niet bereikbaar. Open deze pagina terwijl je bent ingelogd bij Claude."}));return}
   if(!S.ready.lists||!S.ready.items){$("title").textContent=list?String(list.name):"Vandaag";return}
   if(S.cur!=="today"&&!list){S.cur="today";if(location.hash){try{location.hash=""}catch(e){}document.body.classList.add("home")}}
@@ -522,12 +637,14 @@ function renderMain(){
     $("title").textContent="Vandaag";
     var now=S.items.filter(function(it){return !it.done&&it.due&&it.due<=t}).sort(byDue);
     var soon=S.items.filter(function(it){return !it.done&&it.due&&it.due>t&&diffDays(it.due,t)<=7}).sort(byDue);
+    var todayMeals=mealsOn(t);
+    if(todayMeals.length)c.appendChild(mealSection("Vandaag op het menu",todayMeals));
     if(!now.length)c.appendChild(h("p",{class:"empty",text:S.lists.length?"Niets dat vandaag moet. Kies een lijst om iets toe te voegen.":"Er zijn nog geen lijsten. Maak er een met ‘Nieuwe lijst’."}));
+    else c.appendChild(section("Nu te doen",now,t,true));
     if(!S.lists.length&&!S.items.length&&S.online&&SEED.length)c.appendChild(h("button",{class:"primary seedbtn",type:"button",text:SEED_LABEL||"Startlijsten aanmaken",onclick:function(ev){
       ev.currentTarget.disabled=true;ev.currentTarget.textContent="Bezig…";
       write(Promise.all(SEED.map(function(o){return S.db.doc(o.path).set(o.data)})));
     }}));
-    else c.appendChild(section("Nu te doen",now,t,true));
     if(soon.length)c.appendChild(section("Komende 7 dagen",soon,t,true));
     return;
   }
@@ -687,6 +804,384 @@ $("me-form").addEventListener("submit",function(e){
   write(S.db.doc("people/"+id).set({name:n.slice(0,30),createdAt:Date.now(),uid:S.uid})).then(function(ok){if(ok&&old)write(S.db.doc("people/"+old).update({uid:null}))});
 });
 
+/* ---------- recepten en weekmenu ---------- */
+var FMTD=new Intl.DateTimeFormat("nl-NL",{weekday:"long",day:"numeric",month:"short",timeZone:"UTC"});
+var FMTS=new Intl.DateTimeFormat("nl-NL",{day:"numeric",month:"short",timeZone:"UTC"});
+function recipeById(id){for(var i=0;i<S.recipes.length;i++)if(S.recipes[i].id===id)return S.recipes[i];return null}
+function hasContent(r){return !!((r.ingredients&&r.ingredients.length)||r.steps||r.notes||r.url)}
+function isIdea(r){return !!r.idea&&!hasContent(r)}
+function hasIngredients(r){return !!(r&&r.ingredients&&r.ingredients.length)}
+function shopLists(){return S.lists.filter(function(l){return l.kind==="shopping"})}
+function safeUrl(u){try{var x=new URL(String(u||""));return /^https?:$/.test(x.protocol)?x.href:""}catch(e){return""}}
+function hostOf(u){try{return new URL(u).hostname.replace(/^www\./,"")}catch(e){return""}}
+function defServes(){var v=parseInt(store("lijstjes.porties")||"",10);return v>0&&v<50?v:2}
+function weekStartOf(s){return addDays(s,-((toUTC(s).getUTCDay()+6)%7))}
+function isoWeek(s){var d=toUTC(s);d.setUTCDate(d.getUTCDate()+3-((d.getUTCDay()+6)%7));var w1=new Date(Date.UTC(d.getUTCFullYear(),0,4));return 1+Math.round(((d-w1)/864e5-3+((w1.getUTCDay()+6)%7))/7)}
+function byName(a,b){return String(a.name||"").localeCompare(String(b.name||""),"nl",{sensitivity:"base"})}
+function mealsOn(d){return S.meals.filter(function(m){return m.date===d}).sort(function(a,b){return(a.createdAt||0)-(b.createdAt||0)})}
+function mealTitle(m){var r=m.recipeId&&recipeById(m.recipeId);return r?String(r.name||""):String(m.title||"Gerecht")}
+function nextMeal(r){var t=todayStr(),n=null;S.meals.forEach(function(m){if(m.recipeId===r.id&&m.date>=t&&(!n||m.date<n.date))n=m});return n}
+function stepper(val,min,max,onChange,label){
+  var out=h("span",{class:"num",text:String(val)});
+  function set(v){v=Math.max(min,Math.min(max,v));if(v===val)return;val=v;out.textContent=String(v);onChange(v)}
+  return h("span",{class:"stepper"},
+    h("button",{type:"button","aria-label":"Eén minder",onclick:function(){set(val-1)}},"−"),out,
+    h("button",{type:"button","aria-label":"Eén meer",onclick:function(){set(val+1)}},"+"),
+    label?h("span",{text:label}):null);
+}
+function loading(c,title){$("title").textContent=title;c.textContent="";c.appendChild(h("p",{class:"empty",text:"Laden…"}))}
+
+function renderFood(c,t){
+  if(!S.ready.recipes||!S.ready.meals||!S.ready.lists){loading(c,S.cur==="menu"?"Weekmenu":"Recepten");return}
+  c.textContent="";
+  if(S.cur==="recipes")renderRecipes(c);
+  else if(S.cur==="menu")renderMenu(c,t);
+  else renderRecipe(c,recipeById(S.cur.slice(7)));
+}
+
+/* lijst met recepten */
+function recipeRow(r){
+  var meta=h("span",{class:"meta"}),nm=nextMeal(r);
+  if(isIdea(r))meta.appendChild(h("span",{text:"Nog geen recept"}));
+  else{
+    if(r.serves)meta.appendChild(h("span",{class:"chip",text:r.serves+" pers."}));
+    if(r.minutes)meta.appendChild(h("span",{class:"chip",text:r.minutes+" min"}));
+    meta.appendChild(h("span",{text:hasIngredients(r)?r.ingredients.length+" ingrediënten":"Nog geen ingrediënten"}));
+  }
+  if(nm)meta.appendChild(h("span",{class:"chip now",text:"Op menu: "+FMT.format(toUTC(nm.date))}));
+  return h("li",{class:"item nocheck"},h("button",{class:"body",type:"button",onclick:function(){go("recipe:"+r.id)}},
+    h("span",{class:"txt",text:String(r.name||"Recept")}),meta));
+}
+function recipeSection(title,list){
+  var ul=h("ul",{class:"items"});list.forEach(function(r){ul.appendChild(recipeRow(r))});
+  var f=document.createDocumentFragment();f.appendChild(h("div",{class:"sect",text:title}));f.appendChild(ul);return f;
+}
+function renderRecipes(c){
+  $("title").textContent="Recepten";
+  var q=$("r-search").value.trim().toLowerCase();
+  if(!S.recipes.length){
+    c.appendChild(h("p",{class:"empty",text:"Nog geen recepten. Voeg er een toe met ‘+ Recept’."}));
+    if(RECIPES.length&&S.online)c.appendChild(h("button",{class:"primary seedbtn",type:"button",text:(RECIPES_LABEL||"Recepten inladen")+" ("+RECIPES.length+")",onclick:function(ev){
+      ev.currentTarget.disabled=true;ev.currentTarget.textContent="Bezig…";
+      write(Promise.all(RECIPES.map(function(o){return S.db.doc(o.path).set(o.data)})));
+    }}));
+    return;
+  }
+  var all=S.recipes.slice().sort(byName);
+  var hits=q?all.filter(function(r){return String(r.name||"").toLowerCase().indexOf(q)>=0||(r.ingredients||[]).some(function(x){return String(x).toLowerCase().indexOf(q)>=0})}):all;
+  if(!hits.length){
+    c.appendChild(h("p",{class:"empty",text:"Geen recept gevonden met ‘"+$("r-search").value.trim()+"’."}));
+    c.appendChild(h("button",{class:"btn2 seedbtn",type:"button",text:"Nieuw recept ‘"+$("r-search").value.trim()+"’",onclick:function(){openRecipe(null,$("r-search").value.trim())}}));
+    return;
+  }
+  var full=hits.filter(function(r){return !isIdea(r)}),ideas=hits.filter(isIdea);
+  if(full.length)c.appendChild(recipeSection((q?"Gevonden":"Recepten")+" ("+full.length+")",full));
+  if(ideas.length)c.appendChild(recipeSection("Ideeën zonder recept ("+ideas.length+")",ideas));
+}
+$("r-search").addEventListener("input",function(){renderMain()});
+$("r-new").addEventListener("click",function(){openRecipe(null,$("r-search").value.trim())});
+
+/* één recept */
+function renderRecipe(c,r){
+  if(!r){
+    $("title").textContent="Recept";
+    c.appendChild(h("p",{class:"empty",text:"Dit recept bestaat niet meer."}));
+    c.appendChild(h("button",{class:"btn2 seedbtn",type:"button",text:"Naar alle recepten",onclick:function(){go("recipes")}}));
+    return;
+  }
+  $("title").textContent=String(r.name||"Recept");
+  var meta=h("div",{class:"rmeta"}),url=safeUrl(r.url);
+  if(r.serves)meta.appendChild(h("span",{class:"chip",text:"Recept voor "+r.serves+" personen"}));
+  if(r.minutes)meta.appendChild(h("span",{class:"chip",text:r.minutes+" minuten"}));
+  if(url)meta.appendChild(h("a",{class:"chip",href:url,target:"_blank",rel:"noopener noreferrer",text:"Bron: "+hostOf(url)+" ↗"}));
+  if(meta.childNodes.length)c.appendChild(meta);
+  var acts=h("div",{class:"ractions"});
+  if(hasIngredients(r))acts.appendChild(h("button",{class:"primary",type:"button",text:"Op boodschappenlijst",onclick:function(){openShopRecipe(r)}}));
+  acts.appendChild(h("button",{class:"btn2",type:"button",text:"In weekmenu",onclick:function(){openMeal(null,{recipeId:r.id})}}));
+  acts.appendChild(h("button",{class:"btn2",type:"button",text:"Bewerken",onclick:function(){openRecipe(r)}}));
+  c.appendChild(acts);
+  if(!hasContent(r))c.appendChild(h("p",{class:"empty",text:"Dit is nog een idee zonder recept. Tik op Bewerken om ingrediënten en bereiding toe te voegen."}));
+  if(hasIngredients(r)){
+    var view=r.serves?(S.viewServes[r.id]||defServes()):null;
+    var ul=h("ul",{class:"ing"});
+    var fill=function(){ul.textContent="";var f=r.serves&&view?view/r.serves:1;r.ingredients.forEach(function(line){ul.appendChild(h("li",{text:RL.lineOf(RL.scaleIng(RL.parseIng(line),f))}))})};
+    var head=h("div",{class:"sect"},h("span",{text:"Ingrediënten"}),h("span",{class:"sp"}));
+    if(r.serves)head.appendChild(stepper(view,1,40,function(v){view=v;S.viewServes[r.id]=v;store("lijstjes.porties",String(v));fill()},"pers."));
+    c.appendChild(head);fill();c.appendChild(ul);
+    if(!r.serves)c.appendChild(h("p",{class:"small",style:"margin:8px 4px",text:"Vul bij Bewerken in voor hoeveel personen dit recept is, dan rekent de app de hoeveelheden om."}));
+  }
+  if(r.steps){c.appendChild(h("div",{class:"sect",text:"Bereiding"}));c.appendChild(h("div",{class:"card prose",text:String(r.steps)}))}
+  if(r.notes){c.appendChild(h("div",{class:"sect",text:"Notities"}));c.appendChild(h("div",{class:"card prose",text:String(r.notes)}))}
+  var t=todayStr(),planned=S.meals.filter(function(m){return m.recipeId===r.id&&m.date>=t}).sort(function(a,b){return a.date<b.date?-1:1});
+  if(planned.length)c.appendChild(mealSection("Op het menu",planned,true));
+}
+
+/* recept bewerken */
+function openRecipe(r,name){
+  S.editingRecipe=r||null;
+  $("r-heading").textContent=r?"Recept bewerken":"Nieuw recept";
+  $("r-name").value=r?String(r.name||""):(name||"");
+  $("r-serves").value=r&&r.serves?r.serves:"";
+  $("r-min").value=r&&r.minutes?r.minutes:"";
+  $("r-ing").value=r&&r.ingredients?r.ingredients.join("\n"):"";
+  $("r-steps").value=r?String(r.steps||""):"";
+  $("r-notes").value=r?String(r.notes||""):"";
+  $("r-url").value=r?String(r.url||""):"";
+  $("r-delete").hidden=!r;
+  $("dlg-recipe").showModal();
+}
+function intOrNull(v,max){var n=parseInt(v,10);return n>0&&n<=max?n:null}
+$("r-cancel").addEventListener("click",function(){$("dlg-recipe").close()});
+$("recipe-form").addEventListener("submit",function(e){
+  e.preventDefault();if(!S.db)return;
+  var name=$("r-name").value.trim();if(!name)return;
+  var data={
+    name:name.slice(0,120),
+    serves:intOrNull($("r-serves").value,99),
+    minutes:intOrNull($("r-min").value,1440),
+    ingredients:$("r-ing").value.split("\n").map(function(x){return x.trim()}).filter(Boolean).slice(0,100).map(function(x){return RL.normalizeLine(x).slice(0,200)}),
+    steps:$("r-steps").value.trim().slice(0,20000),
+    notes:$("r-notes").value.trim().slice(0,5000),
+    url:safeUrl($("r-url").value.trim()),
+    updatedAt:Date.now(),updatedBy:S.me||null
+  };
+  var r=S.editingRecipe;$("dlg-recipe").close();
+  if(r){
+    data.idea=hasContent(data)?false:!!r.idea;
+    if(r.serves!==data.serves)delete S.viewServes[r.id];
+    write(S.db.doc("recipes/"+r.id).update(data));return;
+  }
+  var id=rid();data.idea=false;data.createdAt=Date.now();data.createdBy=S.me||null;
+  $("r-search").value="";
+  write(S.db.doc("recipes/"+id).set(data)).then(function(ok){if(ok)go("recipe:"+id)});
+});
+twoStep($("r-delete"),"Verwijderen",function(){
+  var r=S.editingRecipe;$("dlg-recipe").close();if(!r||!S.db)return;
+  write(S.db.doc("recipes/"+r.id).delete()).then(function(ok){if(ok){toast("Recept verwijderd");go("recipes")}});
+});
+
+/* weekmenu */
+function mealRow(m,showDate){
+  var meta=h("span",{class:"meta"}),r=m.recipeId&&recipeById(m.recipeId);
+  if(showDate)meta.appendChild(h("span",{class:"chip",text:FMT.format(toUTC(m.date))}));
+  if(m.servings)meta.appendChild(h("span",{class:"chip",text:m.servings+" pers."}));
+  if(m.shopped)meta.appendChild(h("span",{class:"chip",text:"✓ op boodschappenlijst"}));
+  else if(!r)meta.appendChild(h("span",{text:"Zonder recept"}));
+  return h("li",{class:"item nocheck"},h("button",{class:"body",type:"button",onclick:function(){openMeal(m)}},
+    h("span",{class:"txt",text:mealTitle(m)}),meta));
+}
+function mealSection(title,list,showDate){
+  var ul=h("ul",{class:"items"});list.forEach(function(m){ul.appendChild(mealRow(m,showDate))});
+  var f=document.createDocumentFragment();f.appendChild(h("div",{class:"sect",text:title}));f.appendChild(ul);return f;
+}
+function pendingMeals(from,to){
+  return S.meals.filter(function(m){var r=m.recipeId&&recipeById(m.recipeId);return m.date>=from&&m.date<=to&&!m.shopped&&hasIngredients(r)})
+    .sort(function(a,b){return a.date<b.date?-1:a.date>b.date?1:(a.createdAt||0)-(b.createdAt||0)});
+}
+function renderMenu(c,t){
+  $("title").textContent="Weekmenu";
+  if(!S.weekStart)S.weekStart=weekStartOf(t);
+  var ws=S.weekStart,we=addDays(ws,6),thisWeek=weekStartOf(t);
+  var nav=h("div",{class:"weeknav"},
+    h("button",{class:"icon-btn",type:"button","aria-label":"Vorige week",onclick:function(){S.weekStart=addDays(ws,-7);renderMain()}},"‹"),
+    h("div",{class:"wk"},h("strong",{text:"Week "+isoWeek(ws)}),h("span",{text:FMTS.format(toUTC(ws))+" – "+FMTS.format(toUTC(we))})),
+    h("button",{class:"icon-btn",type:"button","aria-label":"Volgende week",onclick:function(){S.weekStart=addDays(ws,7);renderMain()}},"›"));
+  c.appendChild(nav);
+  if(ws!==thisWeek)c.appendChild(h("div",{style:"text-align:center"},h("button",{class:"linkbtn",type:"button",text:"Terug naar deze week",onclick:function(){S.weekStart=thisWeek;renderMain()}})));
+  for(var i=0;i<7;i++){(function(d){
+    var box=h("section",{class:"day"+(d===t?" today":"")+(d<t?" past":"")});
+    var label=FMTD.format(toUTC(d));label=label.charAt(0).toUpperCase()+label.slice(1);
+    var hd=h("div",{class:"day-h"},h("span",{text:label}));
+    if(d===t)hd.appendChild(h("span",{class:"chip now",text:"Vandaag"}));
+    hd.appendChild(h("span",{class:"sp"}));
+    hd.appendChild(h("button",{class:"addmeal",type:"button","aria-label":"Gerecht toevoegen op "+label,text:"+ Gerecht",onclick:function(){openMeal(null,{date:d})}}));
+    box.appendChild(hd);
+    var ms=mealsOn(d);
+    if(ms.length){var ul=h("ul",{class:"items"});ms.forEach(function(m){ul.appendChild(mealRow(m))});box.appendChild(ul)}
+    c.appendChild(box);
+  })(addDays(ws,i))}
+  var from=ws<t?t:ws,pend=pendingMeals(from,we),foot=h("div",{class:"footbar"});
+  if(pend.length)foot.appendChild(h("button",{class:"primary",type:"button",text:"Boodschappen voor deze week ("+pend.length+(pend.length===1?" gerecht)":" gerechten)"),onclick:function(){openShopWeek(pend,ws,we)}}));
+  else if(we>=t&&S.meals.some(function(m){return m.date>=from&&m.date<=we&&m.shopped}))foot.appendChild(h("p",{class:"small",text:"Alle gerechten met een recept staan al op de boodschappenlijst."}));
+  if(foot.childNodes.length)c.appendChild(foot);
+}
+
+/* gerecht plannen */
+function renderMealServes(){var box=$("m-serves");box.textContent="";box.appendChild(stepper(S.mServes,1,40,function(v){S.mServes=v},"pers."))}
+function renderMealLink(){
+  var r=S.mRecipe&&recipeById(S.mRecipe);
+  $("m-linked").textContent=r?"✓ Gekoppeld aan het recept ‘"+r.name+"’.":($("m-dish").value.trim()?"Zonder recept: alleen de naam komt op het menu.":"");
+  $("m-open").hidden=!r;
+}
+function renderMealSugg(){
+  var box=$("m-sugg"),q=$("m-dish").value.trim().toLowerCase();box.textContent="";
+  var cur=S.mRecipe&&recipeById(S.mRecipe);
+  if(cur&&String(cur.name).toLowerCase()===q)return;
+  var list=S.recipes.slice().sort(function(a,b){return(isIdea(a)?1:0)-(isIdea(b)?1:0)||byName(a,b)});
+  if(q)list=list.filter(function(r){return String(r.name||"").toLowerCase().indexOf(q)>=0}).sort(function(a,b){
+    var ia=String(a.name).toLowerCase().indexOf(q),ib=String(b.name).toLowerCase().indexOf(q);return(ia?1:0)-(ib?1:0)||byName(a,b)});
+  list.slice(0,q?6:8).forEach(function(r){
+    box.appendChild(h("button",{type:"button",text:String(r.name),onclick:function(){
+      S.mRecipe=r.id;$("m-dish").value=String(r.name);
+      renderMealSugg();renderMealLink();
+    }}));
+  });
+}
+function openMeal(m,opts){
+  opts=opts||{};S.editingMeal=m||null;
+  var t=todayStr(),r=m?(m.recipeId&&recipeById(m.recipeId)):(opts.recipeId&&recipeById(opts.recipeId));
+  var date=m?m.date:(opts.date||"");
+  if(!date){date=t;var g=0;while(mealsOn(date).length&&g++<14)date=addDays(date,1)}
+  $("m-heading").textContent=m?"Gerecht aanpassen":"Gerecht plannen";
+  $("m-date").value=date;
+  $("m-dish").value=m?mealTitle(m):(r?String(r.name):"");
+  S.mRecipe=r?r.id:null;
+  S.mServes=m&&m.servings?m.servings:defServes();
+  $("m-delete").hidden=!m;
+  renderMealServes();renderMealSugg();renderMealLink();
+  $("dlg-meal").showModal();
+  if(!m&&!r)setTimeout(function(){$("m-dish").focus()},50);
+}
+$("m-dish").addEventListener("input",function(){
+  var cur=S.mRecipe&&recipeById(S.mRecipe);
+  if(cur&&String(cur.name).toLowerCase()!==$("m-dish").value.trim().toLowerCase())S.mRecipe=null;
+  renderMealSugg();renderMealLink();
+});
+$("m-cancel").addEventListener("click",function(){$("dlg-meal").close()});
+$("m-open").addEventListener("click",function(){var id=S.mRecipe;$("dlg-meal").close();if(id)go("recipe:"+id)});
+$("meal-form").addEventListener("submit",function(e){
+  e.preventDefault();if(!S.db)return;
+  var title=$("m-dish").value.trim(),date=$("m-date").value;if(!title||!date)return;
+  var data={date:date,recipeId:S.mRecipe||null,title:title.slice(0,120),servings:S.mServes};
+  var m=S.editingMeal;$("dlg-meal").close();
+  store("lijstjes.porties",String(S.mServes));
+  if(m){
+    if(m.shopped&&(m.servings!==data.servings||m.recipeId!==data.recipeId))data.shopped=false;
+    write(S.db.doc("meals/"+m.id).update(data));return;
+  }
+  data.shopped=false;data.createdAt=Date.now();data.createdBy=S.me||null;
+  write(S.db.doc("meals/"+rid()).set(data)).then(function(ok){
+    if(ok&&S.cur!=="menu")toast("Op het menu gezet voor "+FMTD.format(toUTC(date)));
+  });
+});
+twoStep($("m-delete"),"Verwijderen",function(){var m=S.editingMeal;$("dlg-meal").close();if(m&&S.db)write(S.db.doc("meals/"+m.id).delete())});
+
+/* naar de boodschappenlijst */
+function shopEntries(){
+  var sh=S.shop,ents=[],unknown=[];
+  if(sh.mode==="recipe"){
+    var f=sh.base&&sh.target?sh.target/sh.base:1;
+    sh.r.ingredients.forEach(function(line){ents.push({p:RL.scaleIng(RL.parseIng(line),f),src:[String(sh.r.name)]})});
+  }else sh.meals.forEach(function(m){
+    var r=recipeById(m.recipeId);if(!hasIngredients(r))return;
+    var f=r.serves&&m.servings?m.servings/r.serves:1;
+    if(!r.serves&&unknown.indexOf(r.name)<0)unknown.push(String(r.name));
+    r.ingredients.forEach(function(line){ents.push({p:RL.scaleIng(RL.parseIng(line),f),src:[String(r.name)]})});
+  });
+  sh.unknown=unknown;
+  return RL.combine(ents);
+}
+function shopKey(p){return RL.ingKey(p)+"|"+(p.unit||"")}
+function isChecked(p){var k=shopKey(p);return k in S.shop.checked?S.shop.checked[k]:!RL.isStaple(p)}
+function updateShopBtn(){
+  var n=S.shop.ents.filter(function(e){return isChecked(e.p)}).length;
+  $("s-go").textContent=n?"Zet "+n+" op de lijst":"Niets gekozen";$("s-go").disabled=!n;
+  $("s-all").textContent=n?"Alles uit":"Alles aan";
+}
+function renderShopItems(){
+  var box=$("s-items"),sh=S.shop;box.textContent="";
+  sh.ents=shopEntries();
+  if(sh.mode==="week"){
+    var sub=sh.meals.map(function(m){return mealTitle(m)+" ("+m.servings+" pers.)"}).join(", ");
+    if(sh.unknown.length){var u=sh.unknown.length>1?sh.unknown.slice(0,-1).join(", ")+" en "+sh.unknown[sh.unknown.length-1]:sh.unknown[0];
+      sub+=". Bij "+u+" staat niet voor hoeveel personen het recept is, dus daar zijn de hoeveelheden niet omgerekend."}
+    $("s-sub").textContent=sub;
+  }else $("s-sub").textContent=sh.base?"Vink uit wat je al in huis hebt.":"Vul in voor hoeveel personen het recept is, dan rekent de app de hoeveelheden om. Vink uit wat je al in huis hebt.";
+  sh.ents.forEach(function(e,i){
+    var cb=h("input",{type:"checkbox",id:"s-i-"+i,checked:isChecked(e.p)?"":null});
+    cb.addEventListener("change",function(){S.shop.checked[shopKey(e.p)]=cb.checked;updateShopBtn()});
+    var txt=h("span",null,h("span",{text:RL.lineOf(e.p)}));
+    if(sh.mode==="week"||e.src.length>1)txt.appendChild(h("span",{class:"src",text:"voor "+e.src.join(", ")}));
+    box.appendChild(h("label",{for:"s-i-"+i},cb,txt));
+  });
+  updateShopBtn();
+}
+function fillShopLists(){
+  var ls=shopLists(),sel=$("s-list"),last=store("lijstjes.shoplist");sel.textContent="";
+  ls.forEach(function(l){sel.appendChild(h("option",{value:l.id,text:String(l.name||"Boodschappen"),selected:l.id===last?"":null}))});
+  $("s-list-row").hidden=ls.length<2;
+}
+function openShopRecipe(r){
+  if(!shopLists().length){toast("Maak eerst een lijst van het soort ‘Boodschappen’");return}
+  S.shop={mode:"recipe",r:r,base:r.serves||null,target:S.viewServes[r.id]||defServes(),checked:{}};
+  $("s-heading").textContent=String(r.name);
+  $("s-serves-row").hidden=false;$("s-base").value=r.serves||"";
+  var tb=$("s-target");tb.textContent="";tb.appendChild(stepper(S.shop.target,1,40,function(v){S.shop.target=v;renderShopItems()},"pers."));
+  fillShopLists();renderShopItems();$("dlg-shop").showModal();
+}
+function openShopWeek(meals,ws,we){
+  if(!shopLists().length){toast("Maak eerst een lijst van het soort ‘Boodschappen’");return}
+  S.shop={mode:"week",meals:meals,checked:{}};
+  $("s-heading").textContent="Boodschappen week "+isoWeek(ws);
+  $("s-serves-row").hidden=true;
+  fillShopLists();renderShopItems();$("dlg-shop").showModal();
+}
+$("s-base").addEventListener("input",function(){S.shop.base=intOrNull($("s-base").value,99);renderShopItems()});
+$("s-all").addEventListener("click",function(){
+  var on=!S.shop.ents.some(function(e){return isChecked(e.p)});
+  S.shop.ents.forEach(function(e){S.shop.checked[shopKey(e.p)]=on});renderShopItems();
+});
+$("s-cancel").addEventListener("click",function(){$("dlg-shop").close()});
+function addNote(notes,src){
+  notes=String(notes||"");var lines=notes?notes.split("\n"):[],i;
+  for(i=0;i<lines.length;i++)if(lines[i].indexOf("Voor: ")===0){
+    var have=lines[i].slice(6).split(", ");src.forEach(function(s){if(have.indexOf(s)<0)have.push(s)});lines[i]="Voor: "+have.join(", ");return lines.join("\n");
+  }
+  lines.push("Voor: "+src.join(", "));return lines.join("\n");
+}
+function pushToList(listId,chosen){
+  var mirror=S.items.filter(function(it){return it.listId===listId&&!it.done}).map(function(it){return{id:it.id,text:String(it.text||""),notes:String(it.notes||""),orig:it}});
+  var created=[],prev={},ps=[];
+  chosen.forEach(function(e){
+    var text=RL.lineOf(e.p).slice(0,300),key=RL.ingKey(e.p),ex=null;
+    mirror.forEach(function(m){if(!ex&&RL.ingKey(RL.parseIng(m.text))===key)ex=m});
+    if(ex){
+      if(!prev[ex.id]&&ex.orig)prev[ex.id]={text:ex.orig.text,notes:ex.orig.notes||""};
+      var merged=RL.addToLine(ex.text,e.p),notes=addNote(ex.notes,e.src);
+      if(!merged&&e.p.q!=null&&RL.parseIng(ex.text).q!=null)notes+="\nOok nodig: "+text;
+      var patch={notes:notes.slice(0,2000)};if(merged)patch.text=merged;
+      ex.text=patch.text||ex.text;ex.notes=patch.notes;
+      ps.push(write(itemRef(ex.id).update(patch)));
+      return;
+    }
+    var k=normKey(text),mem=S.memory[k],cat=mem&&mem.cat?mem.cat:guessCat(k),id=rid();
+    remember(text,cat);created.push(id);
+    var note=addNote("",e.src);
+    mirror.push({id:id,text:text,notes:note,orig:null});
+    ps.push(write(itemRef(id).set({listId:listId,text:text,cat:cat,notes:note,done:false,createdAt:Date.now(),createdBy:S.me||null,assignee:null,due:null,repeat:null,lastDone:null,doneAt:null,doneBy:null})));
+  });
+  return Promise.all(ps).then(function(res){return{ok:res.every(Boolean),created:created,prev:prev}});
+}
+$("shop-form").addEventListener("submit",function(e){
+  e.preventDefault();if(!S.db||!S.shop)return;
+  var sh=S.shop,listId=$("s-list").value,chosen=sh.ents.filter(function(x){return isChecked(x.p)});
+  if(!listId||!chosen.length)return;
+  $("dlg-shop").close();store("lijstjes.shoplist",listId);
+  if(sh.mode==="recipe"){
+    store("lijstjes.porties",String(sh.target));
+    if(!sh.r.serves&&sh.base)write(S.db.doc("recipes/"+sh.r.id).update({serves:sh.base}));
+  }
+  pushToList(listId,chosen).then(function(res){
+    if(sh.mode==="week")sh.meals.forEach(function(m){write(S.db.doc("meals/"+m.id).update({shopped:true}))});
+    var l=listById(listId),n=chosen.length;
+    toast(n+(n===1?" ingrediënt":" ingrediënten")+" op ‘"+(l?l.name:"de lijst")+"’ gezet",function(){
+      res.created.forEach(function(id){write(itemRef(id).delete())});
+      Object.keys(res.prev).forEach(function(id){write(itemRef(id).update(res.prev[id]))});
+      if(sh.mode==="week")sh.meals.forEach(function(m){write(S.db.doc("meals/"+m.id).update({shopped:false}))});
+    });
+  });
+});
+
 /* ---------- start ---------- */
 route();
 var loadTimer=null,started=false,asked=false;
@@ -707,6 +1202,8 @@ function start(db){
     S.ready.lists=true;fresh(s);render();
   },dead);
   db.collection("items").onSnapshot(function(s){S.items=rows(s);S.ready.items=true;fresh(s);render();renderSugg()},dead);
+  db.collection("recipes").onSnapshot(function(s){S.recipes=rows(s);S.ready.recipes=true;fresh(s);render()},dead);
+  db.collection("meals").onSnapshot(function(s){S.meals=rows(s);S.ready.meals=true;fresh(s);render()},dead);
   db.collection("memory").onSnapshot(function(s){
     var m={};s.docs.forEach(function(d){var o=d.data();if(o&&o.key)m[o.key]=o});S.memory=m;
   },function(){});
